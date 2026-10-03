@@ -30,6 +30,8 @@ Ayrıntılar:
 
 - `config/main` yoksa veya `accounts` boşsa: kullanıcıya hangi hesap(lar)ın hangi klasörlerinin taranacağını sor,
   cevabı `config/main`'e yaz. (Dashboard'un **Ayarlar** sekmesinden de düzenlenebilir.)
+- `folders` öğelerinden biri virgül içeriyorsa (ör. `"INBOX, Muhasebe"`) virgülden böl ve config'i düzeltilmiş listeyle
+  `update` et (`if_version` ile).
 - Kullanıcı mesajında belirli bir klasör/hesap geçiyorsa ("sadece Faturalar") yalnızca onu tara; config'i değiştirme.
 - Her `<account>/<folder>` için başlangıç tarihi: `meta/state.cursors[...]` varsa o an,
   yoksa bugün − `config.lookbackDays` (varsayılan 30).
@@ -44,7 +46,11 @@ Ayrıntılar:
 - **Dedupe**: doküman id'si `emails/{accountKey}_{messageId}` (karakter kuralı için `schema.md`).
   `emails` koleksiyonunda zaten olanları atla — onları tekrar işleme.
 - Aynı thread'in birden çok mesajı geldiyse thread'i tek birim olarak değerlendir, en son mesajı kaydet.
-- Gövdeyi ilk ~4.000 karaktere kısalt; alıntılanmış eski yanıtları ve imzaları at.
+- Gövdeyi ilk ~4.000 karaktere kısalt; alıntılanmış eski yanıtları ve imzaları at. Arama sonucundaki özet
+  (snippet) çoğu mail için yeterlidir; gövdeyi yalnızca task kararı için gerektiğinde oku.
+- **Yanıt kontrolü**: aynı dönemin gönderilmiş öğelerini (Gmail `in:sent`, Outlook `Sent Items`) de listele.
+  Kullanıcı bir isteği zaten yanıtladıysa (belgeyi gönderdi, ödemeyi yaptığını yazdı) o istek için task açma.
+  Gönderilmiş öğeler taranan klasör sayılmaz; oradan `emails` kaydı yazma.
 
 ## 3. Segmentle ve task çıkar
 

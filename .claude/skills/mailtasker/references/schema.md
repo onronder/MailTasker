@@ -55,7 +55,10 @@ Dashboard Ayarlar sekmesi ve skill tarafından yazılır.
 - `mergedInto`: kullanıcı bu segmenti başka birine birleştirdiyse hedef id. Yeni mailleri hedefe ata.
 
 ## `emails/{emailId}`
-`emailId`: `{accountKey}_{messageId}` (geçersiz karakterler `-`, en fazla 180 karakter; uzunsa messageId'nin son kısmını al).
+`emailId`: Gmail için `{accountKey}_{messageId}`. Outlook/M365 Graph id'leri ~150 karakterdir ve aynı klasördeki
+mesajlarda yalnızca sondaki ~10 karakter değişir; bu yüzden `{accountKey}_{klasörKodu}_{idKuyruğu}` kullan
+(ör. `fitttechs_inbox_n21MflAAA`: kuyruk = son `AA`'dan sonraki kısım, sondaki `=` atılmış). Tam id `messageId`
+alanında durur. Geçersiz karakter (`/`, `=`, boşluk) → `-`.
 ```json
 {
   "account": "gmail-kisisel",

@@ -264,7 +264,7 @@ details.seg-row.merged { opacity: .7; }
       locked: "Adı sen belirledin", recentMails: "Son mailler", noMails: "Mail yok", choose: "Seç…",
       setH: "Taranacak hesaplar ve klasörler",
       setP: "Claude bir sonraki “mailleri tara” komutunda bu listeyi kullanır.",
-      acctKey: "Hesap anahtarı", provider: "Sağlayıcı", address: "Adres", folders: "Klasörler (her satıra bir tane)",
+      acctKey: "Hesap anahtarı", provider: "Sağlayıcı", address: "Adres", folders: "Klasörler (virgül ya da satırla ayır)",
       foldersHint: "Gmail'de etiket adı (ör. Faturalar, Projeler/Alfa) veya INBOX. Outlook'ta klasör adı (ör. Inbox, Müşteriler).",
       addAcct: "Hesap ekle", removeAcct: "Hesabı kaldır", lookback: "İlk taramada kaç gün geriye", maxPerRun: "Tarama başına en fazla mail",
       outLang: "Görev ve özet dili", langAuto: "Mailin dilinde", saveSettings: "Ayarları kaydet",
@@ -303,7 +303,7 @@ details.seg-row.merged { opacity: .7; }
       locked: "Named by you", recentMails: "Recent emails", noMails: "No emails", choose: "Choose…",
       setH: "Accounts and folders to scan",
       setP: "Claude uses this list the next time you say “scan my mail”.",
-      acctKey: "Account key", provider: "Provider", address: "Address", folders: "Folders (one per line)",
+      acctKey: "Account key", provider: "Provider", address: "Address", folders: "Folders (separate with commas or new lines)",
       foldersHint: "For Gmail, a label name (e.g. Invoices, Projects/Alpha) or INBOX. For Outlook, a folder name (e.g. Inbox, Clients).",
       addAcct: "Add account", removeAcct: "Remove account", lookback: "Days to look back on first scan", maxPerRun: "Max emails per scan",
       outLang: "Task and summary language", langAuto: "Same as the email", saveSettings: "Save settings",
@@ -718,7 +718,7 @@ details.seg-row.merged { opacity: .7; }
       btn.disabled = false;
     } else if (kind === "settings") {
       const d = S.settingsDraft;
-      const accounts = d.accounts.map((a) => ({ key: keyify(a.key || a.address.split("@")[0] || ""), provider: a.provider === "m365" ? "m365" : "gmail", address: a.address.trim(), folders: a.folders.split("\n").map((f) => f.trim()).filter(Boolean) }));
+      const accounts = d.accounts.map((a) => ({ key: keyify(a.key || a.address.split("@")[0] || ""), provider: a.provider === "m365" ? "m365" : "gmail", address: a.address.trim(), folders: a.folders.split(/[\n,]+/).map((f) => f.trim()).filter(Boolean) }));
       if (accounts.some((a) => !a.key || !a.folders.length)) { toast(t().keyRequired); return; }
       const clamp = (v, lo, hi, def) => { const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : def; };
       const data = { accounts, lookbackDays: clamp(d.lookbackDays, 1, 365, 30), maxPerRun: clamp(d.maxPerRun, 10, 500, 150), lang: ["auto", "tr", "en"].includes(d.lang) ? d.lang : "auto", updatedAt: new Date().toISOString() };

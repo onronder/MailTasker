@@ -39,13 +39,20 @@ ToolSearch: `outlook` / `microsoft 365`. Mail için `outlook_email_search` tool'
 
 - Bu connector **iş/okul (Entra ID) hesapları** içindir. Kişisel outlook.com/hotmail hesabı bağlanamıyorsa
   kullanıcıya söyle ve o hesabı atla.
-- Arama tabanlıdır: şemada klasör argümanı varsa onu kullan; yoksa sorguya klasör adını
-  KQL olarak ekle (`folder:"Müşteriler"`) ve dönen sonuçlarda klasör alanını kontrol ederek filtrele.
-- Tarih: şemada tarih aralığı argümanı varsa onu kullan; yoksa KQL `received>=YYYY-MM-DD`.
-- `messageId` Graph id'sidir (`/`, `=`, `+` içerebilir) → doküman id'sinde geçersiz karakterleri `-` yap,
-  orijinali `messageId` alanında sakla. `threadId` = `conversationId`.
-- Link: sonuçta `webLink` varsa onu kullan; yoksa
-  `https://outlook.office.com/mail/deeplink/read/<encodeURIComponent(messageId)>`.
+
+Doğrulanmış kullanım (Ekim 2026):
+- Klasör listesi: `outlook_email_search` ile `folderName` + `afterDateTime` (ISO tarih), `limit: 25`, `offset: 0`.
+  Son öğe `{"moreResults": true, "nextOffset": 25, "totalResultCount": N}` ise `offset`'i ilerleterek sayfala.
+- `folderName` ayarlıyken `query` ile `sender`/`afterDateTime` **birlikte kullanılamaz**; klasör taramasında `query` verme.
+- `Inbox`, `Sent Items`, `Archive` gibi standart adlar her dilde tanınır (`INBOX` da çalışır); diğer adlar
+  (ör. `Muhasebe`) klasör listesinden eşlenir.
+- Her sonuç: `id`, `uri` (`mail:///messages/...`), `subject`, `sender` (yalnızca adres), `recipients`,
+  `receivedDateTime`, `summary` (gövdenin ilk ~250 karakteri), `hasAttachments`, `importance`, `isRead`, `webLink`.
+  Tam gövde gerekirse `read_resource` ile `uri`'yi oku.
+- Sonuçlarda `conversationId` yok → `threadId` olarak `RE:/FW:` önekleri atılmış küçük harf konu kullan.
+- Doküman id'si için `schema.md` → `emailId` (kısa kuyruk şeması); tam Graph id `messageId` alanına.
+- Link: `webLink`'i aynen kullan.
+- Gönderilmiş öğeler: `folderName: "Sent Items"` + aynı `afterDateTime`.
 
 ## Gövde temizliği (her sağlayıcı)
 - HTML ise düz metne çevir; görsel/izleme pikseli/stil bloklarını at.
