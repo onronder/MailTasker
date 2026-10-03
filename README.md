@@ -1,64 +1,99 @@
 # MailTasker
 
-Gmail ve Outlook (Microsoft 365) hesaplarında **seçtiğin klasörlerdeki** mailleri okuyan,
-konulara (segmentlere) ayıran ve maillerden **yapılacaklar listesi** çıkaran bir Claude agent'ı.
-Sonuçlar claude.ai'de canlı bir dashboard'da durur. Sunucu, veritabanı ya da API anahtarı gerekmez.
+A Claude agent that reads the Gmail or Outlook folders you pick, groups the mail by topic and turns it into a
+to-do list on a live dashboard in your own Claude account. No server, database or API key.
+
+Gmail ya da Outlook'ta seçtiğin klasörlerdeki mailleri okuyan, konulara ayıran ve yapılacakları kendi Claude
+hesabındaki canlı bir dashboard'a yazan Claude agent'ı. Sunucu, veritabanı ya da API anahtarı gerekmez.
 
 ```
-"mailleri tara"  ─►  mailtasker skill (Claude)
-                       ├─ Gmail / Microsoft 365 connector'ları ile klasörleri okur (salt okunur)
-                       ├─ segmentler, özetler, görevleri çıkarır
-                       └─ sonuçları MailTasker Dashboard'a yazar  ─►  claude.ai artifact
+"scan my mail" / "mailleri tara"
+        │
+        ▼
+  mailtasker skill ──► Gmail / Microsoft 365 connector (read-only)
+        │
+        ▼
+  MailTasker Dashboard  (a private page in your Claude account: topics, tasks, settings)
 ```
 
-## Bileşenler
+## Install / Kurulum
 
-| Yol | Ne işe yarar |
+### 1. Add the skill / Skill'i ekle
+
+1. Download [`dist/mailtasker-skill.zip`](dist/mailtasker-skill.zip).
+2. In Claude: **Settings › Capabilities** → turn on **Code execution and file creation** (skills need it).
+3. Same page: **Skills › Upload skill** and pick the zip.
+   *(Claude › Ayarlar › Yetenekler → "Kod çalıştırma ve dosya oluşturma"yı aç → Skills › Skill yükle)*
+
+Team/Enterprise owners can make it available to everyone at once:
+**Organization settings › Plugins & skills › Add › Upload a skill**, then set it to *Installed by default*.
+
+### 2. Connect your mail / Mailini bağla
+
+**Settings › Connectors** → connect **Gmail** and/or **Microsoft 365**.
+Microsoft 365 is for work or school accounts. Some companies require an IT admin to approve it first.
+
+### 3. Run it / Çalıştır
+
+Start a chat and say **"scan my mail"** (or **"mailleri tara"**).
+
+On the first run Claude:
+1. creates your private **MailTasker Dashboard** page,
+2. asks which accounts and folders to scan,
+3. scans the last 30 days and fills the dashboard.
+
+After that, saying "scan my mail" again only processes new mail.
+
+## Using the dashboard / Dashboard
+
+- **Overview**: open, overdue and this-week tasks, one card per topic with a 30-day mail chart.
+- **Tasks**: grouped by due date. Mark done, snooze to tomorrow or next week, dismiss.
+- **Segments**: rename, recolor or merge topics. Future scans follow your changes.
+- **Settings**: accounts, folders, how far back the first scan goes, task language.
+- Switch the interface between Turkish and English in the top-right corner.
+
+Example requests:
+- `scan only my Invoices folder` / `sadece Faturalar klasörünü tara`
+- `what's overdue this week?` / `bu hafta gecikmiş ne var?`
+
+## Privacy / Gizlilik
+
+- Mail access is read-only. MailTasker never sends, deletes, moves or labels mail.
+- The dashboard stores subject, sender, date, a 1–2 sentence summary and a link per email. It never stores full
+  bodies or attachments.
+- The dashboard is private to you. If you share it, the people you share it with can read those summaries.
+- Before creating tasks, Claude checks your Sent folder so requests you already answered are skipped.
+
+## Where it works / Nerede çalışır
+
+The live dashboard needs a Claude environment that can publish artifacts with storage. Where that isn't
+available, MailTasker falls back to **snapshot mode**: it scans the last few days and lists the tasks in chat,
+without remembering earlier scans.
+
+## Claude Code / Cowork plugin
+
+This repo is also a plugin marketplace:
+
+```
+/plugin marketplace add onronder/mailtasker
+/plugin install mailtasker@mailtasker
+```
+
+Once added from Claude Code, the plugin also shows up in the desktop app's Cowork mode at the next session.
+The repo must be public, or the user needs GitHub access to it.
+
+## For developers / Geliştiriciler için
+
+| Path | Purpose |
 |---|---|
-| `.claude/skills/mailtasker/SKILL.md` | Agent'ın adım adım çalışma talimatı |
-| `.claude/skills/mailtasker/references/extraction.md` | Segment ve görev çıkarma kuralları (TR/EN örnekli) |
-| `.claude/skills/mailtasker/references/providers.md` | Gmail etiket ve Outlook klasör sorgu tarifleri |
-| `.claude/skills/mailtasker/references/schema.md` | Dashboard veri şeması |
-| `dashboard/index.html` | Dashboard sayfasının kaynağı |
-| `mailtasker.json` | Yayınlanmış dashboard'un adresi |
+| `skills/mailtasker/SKILL.md` | Agent workflow |
+| `skills/mailtasker/references/extraction.md` | Topic and task rules (TR/EN examples) |
+| `skills/mailtasker/references/providers.md` | Gmail and Microsoft 365 query recipes |
+| `skills/mailtasker/references/schema.md` | Dashboard data model |
+| `skills/mailtasker/assets/dashboard.html` | Dashboard page, published on first run |
+| `.claude-plugin/` | Plugin and marketplace manifests |
+| `scripts/build-skill.sh` | Rebuilds `dist/mailtasker-skill.zip` |
 
-Dashboard: https://claude.ai/artifact/MeW1dkCwBgnkCJKVKcWvv5 (gizli, yalnızca sen açabilirsin)
-
-## Kurulum
-
-1. **Gmail**: claude.ai › Settings › Connectors › **Gmail** › Connect.
-2. **Outlook**: aynı yerden **Microsoft 365** connector'ünü ekle. Bu connector iş/okul hesapları içindir;
-   kişisel outlook.com/hotmail hesapları bağlanamayabilir.
-3. Dashboard'u aç › **Ayarlar** sekmesi › hesaplarını ve taranacak klasörleri ekle › *Ayarları kaydet*.
-   - Gmail'de klasör = etiket adı (`Faturalar`, `Projeler/Alfa`) ya da `INBOX`.
-   - Outlook'ta klasör adı (`Inbox`, `Müşteriler`).
-
-## Kullanım
-
-Bu repo açıkken Claude Code'da (veya skill'i yüklediğin bir claude.ai sohbetinde) şunlardan birini yaz:
-
-- `mailleri tara` / `scan my mail` / `/mailtasker`
-- `sadece Faturalar klasörünü tara`
-- `iş hesabımdaki Müşteriler klasörünü son 7 gün için tara`
-
-Claude yeni mailleri işler, dashboard'u günceller ve sohbete kısa bir özet yazar.
-Agent yalnızca sen istediğinde çalışır.
-
-### Dashboard'da
-
-- **Özet**: açık / gecikmiş / bu haftaki görevler, segment kartları ve 30 günlük mail grafiği.
-- **Görevler**: tarihe göre gruplu liste. Tamamla, yarına ya da 1 hafta sonraya ertele, yoksay.
-- **Segmentler**: yeniden adlandır, renk ver, iki segmenti birleştir. Bir sonraki tarama bu kararlara uyar.
-- **Ayarlar**: hesaplar, klasörler, ilk taramada kaç gün geriye gidileceği, görev dili.
-- Sağ üstten arayüz dilini TR/EN arasında değiştirebilirsin.
-
-### claude.ai'de (repo olmadan) kullanmak
-
-`.claude/skills/mailtasker` klasörünü zip'leyip claude.ai › Settings › Capabilities › Skills'ten yükle.
-İlk çalıştırmada Claude dashboard linkini soracak; yukarıdaki adresi ver.
-
-## Gizlilik
-
-- Agent maillere yalnızca **okuma** amaçlı erişir; mail göndermez, silmez, etiket değiştirmez.
-- Dashboard'a mailin tamamı değil, yalnızca konu, gönderen, tarih, 1–2 cümlelik özet ve bağlantı yazılır.
-- Dashboard gizlidir. Paylaşırsan, paylaştığın kişiler bu özetleri ve görevleri görebilir.
+`.claude/skills/mailtasker` is a symlink to `skills/mailtasker`, so opening this repo in Claude Code loads the
+skill automatically. Run `scripts/build-skill.sh` after changing the skill. Your personal dashboard link is kept in
+`mailtasker.json`, which is git-ignored.

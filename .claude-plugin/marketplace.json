@@ -1,0 +1,11 @@
+{
+  "name": "mailtasker",
+  "owner": { "name": "Onur Önder" },
+  "plugins": [
+    {
+      "name": "mailtasker",
+      "source": "./",
+      "description": "Turns the mail folders you pick into topics and a to-do list on a live dashboard."
+    }
+  ]
+}

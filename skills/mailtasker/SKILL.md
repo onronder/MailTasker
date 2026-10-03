@@ -1,30 +1,55 @@
 ---
 name: mailtasker
-description: Seçili Gmail ve Outlook (Microsoft 365) klasörlerindeki yeni mailleri okur, konulara (segmentlere) ayırır, her mailden yapılacak işleri (todo/task) çıkarır ve sonuçları MailTasker Dashboard artifact'ına yazar. Kullanıcı "mailleri tara", "mailtasker'ı çalıştır", "inbox'tan task çıkar", "Faturalar klasörünü tara", "dashboard'u güncelle", "scan my mail", "extract tasks from my inbox" dediğinde veya /mailtasker yazdığında kullan. Sadece istendiğinde çalışır; kendi kendine zamanlanmaz.
+description: Reads new mail in the Gmail or Outlook (Microsoft 365) folders the user picks, groups it by topic, extracts to-dos and keeps them in a live MailTasker Dashboard in the user's own Claude account. Seçili mail klasörlerini tarar, konulara ayırır, yapılacakları çıkarır. Use when the user says "mailleri tara", "scan my mail", "extract tasks from my inbox", "Faturalar klasörünü tara", "update my mail dashboard" or /mailtasker. Runs only when asked.
 ---
 
 # MailTasker
 
 Kullanıcının seçtiği mail klasörlerini tarayan, segmentleyen ve todo listesi çıkaran agent.
 Sonuçların tek kaynağı **MailTasker Dashboard** artifact'ının `db` deposudur; bu skill o depoyu
-`ArtifactData` tool'u ile okur ve yazar. Dashboard canlıdır: yazdığın her şey açık sayfada anında görünür.
+`ArtifactData` tool'u ile okur ve yazar. Her kullanıcının kendi dashboard'u vardır. Dashboard canlıdır: yazdığın her şey açık sayfada anında görünür.
 
 Ayrıntılar:
 - Veri şeması ve yazma örnekleri → `references/schema.md`
 - Gmail / Outlook sorgu tarifleri → `references/providers.md`
 - Segmentasyon ve task çıkarma kuralları → `references/extraction.md`
+- Dashboard sayfası (ilk kurulumda yayınlanır) → `assets/dashboard.html`
 
 ## 0. Hazırlık
 
-1. **Dashboard URL'si**: repo kökündeki `mailtasker.json` → `dashboardUrl`. Dosya yoksa (ör. claude.ai sohbetinde)
-   kullanıcıdan dashboard linkini iste. Hiç dashboard yoksa `dashboard/index.html`'i Artifact olarak
-   `capabilities: {db: {}, user: {}}` ile publish et ve URL'yi `mailtasker.json`'a yaz.
-2. **Tool'ları yükle**: `ArtifactData`'yı ve mail connector tool'larını ToolSearch ile yükle
-   (`gmail`, `outlook` / `microsoft 365` anahtar kelimeleri). Bir connector bulunamazsa ya da bağlı değilse
-   o hesabı atla, sonunda kullanıcıya hangi connector'ı claude.ai › Settings › Connectors'tan bağlaması
-   gerektiğini söyle (Claude Code on the web'de `read_documentation` → `connectors.add`).
-3. **Durumu oku** (tek seferde, paralel): `config/main`, `meta/state`, `segments` koleksiyonu,
-   `tasks` koleksiyonu (sadece id + status + emailId alanlarına bakacaksın).
+Bu skill herkesin kendi Claude hesabında çalışır. Kullanıcıya **onun dilinde** yanıt ver (Türkçe, İngilizce, …).
+
+1. **Tool'ları yükle** (ToolSearch): `Artifact`, `ArtifactData` ve mail connector'ları (`gmail`, `outlook`,
+   `microsoft 365` anahtar kelimeleri).
+   - Hiç mail connector'ı yoksa dur ve kullanıcıya Claude ayarlarındaki **Connectors** bölümünden Gmail ya da
+     Microsoft 365'i bağlamasını söyle. Biri bağlıysa ötekini atla ve raporda belirt.
+   - `Artifact` veya `ArtifactData` yoksa → **Anlık mod** (aşağıda).
+2. **Kullanıcının dashboard'unu bul**, sırayla:
+   1. Kullanıcı mesajında bir claude.ai artifact linki verdiyse onu kullan.
+   2. Çalışma dizininde `mailtasker.json` varsa → `dashboardUrl` (kişisel, repo'ya girmez).
+   3. `Artifact` `action: "list"` → başlığı **MailTasker Dashboard** olan en yeni artifact.
+   4. Hiçbiri yoksa → **İlk kurulum** (aşağıda).
+   Başka birinin dashboard'una asla yazma; yalnızca kullanıcının kendi listesinde çıkan ya da kendisinin verdiği
+   linki kullan.
+3. **Durumu oku** (paralel): `config/main`, `meta/state`, `segments`, `tasks` (id + status + emailId + threadId yeter).
+
+### İlk kurulum
+1. Kullanıcıya bir cümleyle ne olacağını anlat: seçtiği klasörler salt okunur taranacak; özetler ve görevler
+   yalnızca onun görebildiği özel bir sayfada tutulacak.
+2. Bu skill'in klasöründeki `assets/dashboard.html` dosyasını scratchpad'e (yoksa çalışma dizinine)
+   `mailtasker-dashboard.html` adıyla kopyala. Artifact tool'u yalnızca bu dizinlerdeki dosyaları yayınlar.
+3. Yayınla: `Artifact` publish, `file_path` = kopya, `capabilities: {"db": {}, "user": {}}`, `icon: "mail"`,
+   `description: "Mail klasörlerinden çıkarılan segmentler ve görevler"`.
+4. Dönen URL'yi kullanıcıya ver. Yazılabilir bir çalışma dizini varsa `mailtasker.json`'a
+   `{"dashboardUrl": "<url>"}` yaz.
+5. Hangi hesap ve klasörlerin taranacağını sor (bağlı connector'lardaki adresi öner; ör. Gmail için `INBOX`,
+   Outlook için `Inbox`). Cevabı `config/main`'e `set` et ve devam et. Kullanıcı Ayarlar sekmesinden sonra da değiştirebilir.
+
+### Anlık mod (Artifact tool'ları yoksa)
+Kalıcı depo olmadan da çalış: kullanıcıya hangi klasörleri ve kaç gün geriye (varsayılan 7) tarayacağını sor,
+adım 2–3'ü uygula, sonucu sohbette segment başlıkları altında görev listesi olarak ver. Bu modda önceki
+taramalar hatırlanmaz; kullanıcıya canlı dashboard için Artifact yayınlamayı destekleyen bir Claude ortamında
+(ör. Claude Code ya da Cowork) çalıştırmasını öner.
 
 ## 1. Kapsamı belirle
 

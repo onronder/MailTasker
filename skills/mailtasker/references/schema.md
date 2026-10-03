@@ -57,7 +57,7 @@ Dashboard Ayarlar sekmesi ve skill tarafından yazılır.
 ## `emails/{emailId}`
 `emailId`: Gmail için `{accountKey}_{messageId}`. Outlook/M365 Graph id'leri ~150 karakterdir ve aynı klasördeki
 mesajlarda yalnızca sondaki ~10 karakter değişir; bu yüzden `{accountKey}_{klasörKodu}_{idKuyruğu}` kullan
-(ör. `fitttechs_inbox_n21MflAAA`: kuyruk = son `AA`'dan sonraki kısım, sondaki `=` atılmış). Tam id `messageId`
+(ör. `is_inbox_n21MflAAA`: kuyruk = son `AA`'dan sonraki kısım, sondaki `=` atılmış). Tam id `messageId`
 alanında durur. Geçersiz karakter (`/`, `=`, boşluk) → `-`.
 ```json
 {

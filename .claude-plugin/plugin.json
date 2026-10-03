@@ -1,0 +1,8 @@
+{
+  "name": "mailtasker",
+  "version": "0.1.0",
+  "description": "Scans the Gmail or Outlook folders you pick, groups mail by topic and keeps the extracted to-dos on a live dashboard in your Claude account.",
+  "author": { "name": "Onur Önder" },
+  "homepage": "https://github.com/onronder/mailtasker",
+  "keywords": ["email", "gmail", "outlook", "tasks", "todo", "dashboard"]
+}
