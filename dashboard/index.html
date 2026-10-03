@@ -1,0 +1,758 @@
+<title>MailTasker Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: sorting-desk dashboard — header with scan stamp, tab strip, then one working surface per tab; summary first, detail below. */
+:root {
+  --bg: #f2f4f7;
+  --surface: #fcfcfd;
+  --surface-2: #e9edf2;
+  --fg: #131821;
+  --fg-2: #485062;
+  --muted: #747c8c;
+  --line: #d9dee6;
+  --accent: #0e5e6f;
+  --accent-ink: #ffffff;
+  --accent-soft: #dcecef;
+  --crit: #d03b3b;
+  --crit-ink: #b02424;
+  --warn: #fab219;
+  --warn-ink: #8a5a00;
+  --good: #0ca30c;
+  --good-ink: #006300;
+  --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a; --c4: #eda100;
+  --c5: #e87ba4; --c6: #008300; --c7: #4a3aa7; --c8: #e34948;
+  --shadow: 0 1px 2px rgba(19,24,33,.06), 0 4px 16px rgba(19,24,33,.05);
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1116; --surface: #161a21; --surface-2: #1e232c; --fg: #edf0f5; --fg-2: #b3bac7;
+    --muted: #808898; --line: #2a303b; --accent: #5cc3d6; --accent-ink: #0b1a1e; --accent-soft: #15333a;
+    --crit-ink: #f07272; --warn-ink: #f5c04a; --good-ink: #3ccb3c;
+    --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500;
+    --c5: #d55181; --c6: #008300; --c7: #9085e9; --c8: #e66767;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1116; --surface: #161a21; --surface-2: #1e232c; --fg: #edf0f5; --fg-2: #b3bac7;
+  --muted: #808898; --line: #2a303b; --accent: #5cc3d6; --accent-ink: #0b1a1e; --accent-soft: #15333a;
+  --crit-ink: #f07272; --warn-ink: #f5c04a; --good-ink: #3ccb3c;
+  --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500;
+  --c5: #d55181; --c6: #008300; --c7: #9085e9; --c8: #e66767;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.25);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 56px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: 1.75rem; font-weight: 700; }
+h2 { font-size: 1.2rem; font-weight: 600; }
+h3 { font-size: 1rem; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); }
+.sub { color: var(--fg-2); }
+
+/* Header */
+.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; padding-bottom: 16px; }
+.brand { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.stamp { display: inline-flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-size: .85rem; color: var(--fg-2); }
+.stamp .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); flex: none; }
+.stamp .dot.idle { background: var(--muted); }
+.seg-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg-toggle button { border: 0; background: none; padding: 6px 12px; cursor: pointer; font-size: .85rem; font-weight: 600; color: var(--fg-2); }
+.seg-toggle button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 20px; overflow-x: auto; }
+.tabs button { border: 0; background: none; padding: 10px 14px; cursor: pointer; font-weight: 600; color: var(--fg-2); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tabs .count { font-family: var(--f-mono); font-size: .75rem; background: var(--surface-2); border-radius: 999px; padding: 0 7px; color: var(--fg-2); }
+
+.banner { border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 12px 14px; margin-bottom: 16px; color: var(--fg-2); }
+.banner.warn { border-color: var(--warn); }
+
+/* KPIs */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 24px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; }
+.kpi .v { font-family: var(--f-display); font-size: 2rem; font-weight: 700; line-height: 1.1; }
+.kpi.crit .v { color: var(--crit-ink); }
+.kpi small { color: var(--muted); font-size: .8rem; }
+@media (max-width: 720px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.section-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+
+/* Segment cards */
+.seg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; }
+.seg-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.seg-card header { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; }
+.seg-name { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; background: var(--sc, var(--muted)); }
+.seg-name h3 { overflow-wrap: anywhere; }
+.seg-stats { display: flex; gap: 14px; font-size: .85rem; color: var(--fg-2); }
+.seg-stats b { font-family: var(--f-mono); font-weight: 500; color: var(--fg); }
+.spark { width: 100%; height: 44px; display: block; }
+.spark .base { stroke: var(--line); stroke-width: 1; }
+.spark rect { fill: var(--sc, var(--muted)); }
+.spark rect.zero { fill: var(--surface-2); }
+.spark-axis { display: flex; justify-content: space-between; font-size: .7rem; color: var(--muted); font-family: var(--f-mono); margin-top: 4px; }
+.seg-top { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: .88rem; }
+.seg-top li { display: flex; gap: 6px; min-width: 0; }
+.seg-top li span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.link-btn { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; font-weight: 600; font-size: .85rem; }
+.card-foot { display: flex; gap: 16px; margin-top: auto; border-top: 1px solid var(--line); padding-top: 10px; }
+
+/* Buttons & inputs */
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-weight: 500; font-size: .88rem; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--crit-ink); }
+.btn[disabled] { opacity: .5; cursor: default; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field label { font-size: .78rem; font-weight: 600; color: var(--fg-2); }
+.input, select.input, textarea.input { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 10px; width: 100%; min-width: 0; }
+textarea.input { resize: vertical; min-height: 76px; font-family: var(--f-mono); font-size: .85rem; }
+
+/* Tasks */
+.filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 18px; }
+.filters .field { flex: 1 1 150px; }
+.filters .field.search { flex: 2 1 220px; }
+.bucket { margin-bottom: 22px; }
+.bucket h2 { font-size: 1rem; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.bucket h2 .mono { font-size: .8rem; color: var(--muted); font-weight: 400; }
+.bucket.overdue h2 { color: var(--crit-ink); }
+.task-list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.task { display: grid; grid-template-columns: 4px auto minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 12px 14px 12px 0; border-top: 1px solid var(--line); }
+.task:first-child { border-top: 0; }
+.task .stripe { align-self: stretch; border-radius: 0 3px 3px 0; background: transparent; }
+.task.p-high .stripe { background: var(--crit); }
+.task.p-med .stripe { background: var(--warn); }
+.check { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--muted); background: var(--surface); cursor: pointer; display: grid; place-items: center; padding: 0; margin-top: 1px; }
+.check svg { width: 14px; height: 14px; stroke: var(--accent-ink); stroke-width: 2.5; fill: none; opacity: 0; }
+.task.done .check { background: var(--accent); border-color: var(--accent); }
+.task.done .check svg { opacity: 1; }
+.task.done .t-title, .task.dismissed .t-title { text-decoration: line-through; color: var(--muted); }
+.t-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.t-title { font-weight: 600; overflow-wrap: anywhere; }
+.t-detail { font-size: .88rem; color: var(--fg-2); overflow-wrap: anywhere; }
+.t-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .8rem; color: var(--muted); align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px 1px 6px; font-size: .78rem; color: var(--fg-2); background: var(--surface); max-width: 100%; }
+.chip .swatch { width: 8px; height: 8px; border-radius: 50%; }
+.prio { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.prio.high { color: var(--crit-ink); }
+.prio.med { color: var(--warn-ink); }
+.prio.low { color: var(--muted); }
+.due.over { color: var(--crit-ink); font-weight: 600; }
+.t-actions { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.t-actions .btn { padding: 4px 9px; font-size: .8rem; }
+@media (max-width: 640px) {
+  .task { grid-template-columns: 4px auto minmax(0, 1fr); }
+  .t-actions { grid-column: 3; justify-content: flex-start; }
+}
+
+/* Segments tab */
+.seg-rows { display: flex; flex-direction: column; gap: 10px; }
+details.seg-row { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+details.seg-row > summary { list-style: none; cursor: pointer; padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; justify-content: space-between; }
+details.seg-row > summary::-webkit-details-marker { display: none; }
+details.seg-row > summary::after { content: "▸"; color: var(--muted); margin-left: auto; }
+details.seg-row[open] > summary::after { content: "▾"; }
+details.seg-row.merged { opacity: .7; }
+.seg-body { padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 16px; border-top: 1px solid var(--line); }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; align-items: end; padding-top: 12px; }
+.colors { display: flex; flex-wrap: wrap; gap: 6px; }
+.colors button { width: 24px; height: 24px; border-radius: 6px; border: 2px solid transparent; background: var(--sc); cursor: pointer; padding: 0; }
+.colors button[aria-pressed="true"] { border-color: var(--fg); }
+.mail-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.mail { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.mail:first-child { border-top: 0; }
+.mail .subj { font-weight: 600; overflow-wrap: anywhere; }
+.mail .when { font-size: .8rem; color: var(--muted); }
+.mail .from, .mail .sum { grid-column: 1 / -1; font-size: .86rem; color: var(--fg-2); overflow-wrap: anywhere; }
+.mail .from { color: var(--muted); font-size: .8rem; }
+.confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--surface-2); border-radius: 8px; padding: 8px 10px; font-size: .88rem; }
+
+/* Settings */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.acct { border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.acct .wide { grid-column: 1 / -1; }
+.row-end { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.hint { font-size: .82rem; color: var(--muted); }
+
+/* Empty state */
+.empty { background: var(--surface); border: 1px dashed var(--line); border-radius: var(--r); padding: 28px 20px; display: flex; flex-direction: column; gap: 14px; max-width: 720px; }
+.empty ol { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; color: var(--fg-2); }
+.prompt-box { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.prompt-box code { font-family: var(--f-mono); background: var(--surface-2); padding: 6px 10px; border-radius: 6px; user-select: all; }
+
+.runs { list-style: none; margin: 0; padding: 0; font-size: .85rem; color: var(--fg-2); display: flex; flex-direction: column; gap: 4px; }
+.cols-2 { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 20px; margin-top: 28px; }
+@media (max-width: 860px) { .cols-2 { grid-template-columns: minmax(0, 1fr); } }
+
+#tip { position: fixed; pointer-events: none; background: var(--fg); color: var(--bg); font-size: .78rem; padding: 4px 8px; border-radius: 6px; font-family: var(--f-mono); z-index: 20; white-space: nowrap; }
+#toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: .88rem; z-index: 30; max-width: calc(100% - 32px); }
+@media (prefers-reduced-motion: no-preference) { .btn, .check, .tabs button { transition: background-color .12s, border-color .12s, color .12s; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>MailTasker</h1>
+      <div class="stamp" id="stamp"><span class="dot idle"></span><span id="stampText"></span></div>
+    </div>
+    <div class="seg-toggle" role="group" aria-label="Language">
+      <button type="button" id="langTr" data-lang="tr">TR</button>
+      <button type="button" id="langEn" data-lang="en">EN</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+  <div id="banner"></div>
+  <main id="view"></main>
+</div>
+<div id="tip" hidden></div>
+<div id="toast" hidden role="status"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- i18n ----------
+  const I18N = {
+    tr: {
+      tabs: { overview: "Özet", tasks: "Görevler", segments: "Segmentler", settings: "Ayarlar" },
+      neverScanned: "Henüz tarama yapılmadı",
+      lastScan: (d, n, t) => `Son tarama ${d} · ${n} mail · ${t} yeni görev`,
+      loading: "Veriler yükleniyor…",
+      noDb: "Bu görünümde veri deposuna erişilemiyor. Sayfayı claude.ai'de oturum açmış olarak açın.",
+      readOnly: "Bu sayfayı yalnızca görüntüleyebilirsiniz; değişiklikler kaydedilmez.",
+      kpiOpen: "Açık görev", kpiOverdue: "Gecikmiş", kpiWeek: "Bu hafta", kpiMail: "Mail (30 gün)",
+      kpiOpenSub: (h) => `${h} yüksek öncelikli`, kpiOverdueSub: "son tarihi geçti", kpiWeekSub: "7 gün içinde", kpiMailSub: (s) => `${s} segmentte`,
+      segmentsH: "Segmentler", segmentsSub: "Son 30 günde gelen mail, günlük",
+      mails: "mail", openTasks: "açık görev", seeTasks: "Görevler", seeMails: "Mailler",
+      noOpen: "Açık görev yok",
+      runsH: "Tarama geçmişi", noRuns: "Kayıt yok",
+      runLine: (d, n, t, s) => `${d} — ${n} mail, ${t} görev${s ? `, ${s} yeni segment` : ""}`,
+      emptyH: "İlk taramayı başlat",
+      emptyP: "MailTasker seçtiğin klasörlerdeki mailleri okur, konulara ayırır ve yapılacak işleri buraya listeler.",
+      emptySteps: ["Ayarlar sekmesinden hesaplarını ve taranacak klasörleri ekle.", "Claude'a aşağıdaki komutu yaz. Sonuçlar bu sayfada canlı olarak belirir."],
+      emptyPrompt: "mailleri tara", copy: "Kopyala", copied: "Kopyalandı", goSettings: "Ayarlara git",
+      fSeg: "Segment", fPrio: "Öncelik", fStatus: "Durum", fAcct: "Hesap", fSearch: "Ara", all: "Tümü",
+      searchPh: "Başlık, gönderen, konu…",
+      prio: { high: "Yüksek", med: "Orta", low: "Düşük" },
+      status: { open: "Açık", done: "Tamamlandı", dismissed: "Yoksayıldı", snoozed: "Ertelendi" },
+      buckets: { overdue: "Gecikmiş", today: "Bugün", week: "Bu hafta", later: "Daha sonra", nodate: "Tarihsiz", closed: "Kapalı" },
+      due: "Son tarih", openMail: "Maili aç", snoozeTomorrow: "Yarın", snoozeWeek: "1 hafta sonra", snoozeTitle: "Ertele",
+      dismiss: "Yoksay", reopen: "Geri al", markDone: "Tamamlandı olarak işaretle", markOpen: "Açık olarak işaretle",
+      snoozedUntil: (d) => `${d} tarihine ertelendi`, noTasks: "Bu filtreyle görev yok.",
+      segRename: "Ad (TR)", segRenameEn: "Ad (EN)", segDesc: "Açıklama", save: "Kaydet", saved: "Kaydedildi",
+      color: "Renk", mergeInto: "Şununla birleştir", merge: "Birleştir", mergeConfirm: (a, b) => `“${a}” segmenti “${b}” içine birleştirilecek. Sonraki taramalarda yeni mailler de oraya gider.`,
+      cancel: "Vazgeç", unmerge: "Birleştirmeyi geri al", mergedInto: (n) => `→ ${n} içine birleştirildi`,
+      locked: "Adı sen belirledin", recentMails: "Son mailler", noMails: "Mail yok", choose: "Seç…",
+      setH: "Taranacak hesaplar ve klasörler",
+      setP: "Claude bir sonraki “mailleri tara” komutunda bu listeyi kullanır.",
+      acctKey: "Hesap anahtarı", provider: "Sağlayıcı", address: "Adres", folders: "Klasörler (her satıra bir tane)",
+      foldersHint: "Gmail'de etiket adı (ör. Faturalar, Projeler/Alfa) veya INBOX. Outlook'ta klasör adı (ör. Inbox, Müşteriler).",
+      addAcct: "Hesap ekle", removeAcct: "Hesabı kaldır", lookback: "İlk taramada kaç gün geriye", maxPerRun: "Tarama başına en fazla mail",
+      outLang: "Görev ve özet dili", langAuto: "Mailin dilinde", saveSettings: "Ayarları kaydet",
+      saveFail: "Kaydedilemedi. Bağlantını kontrol edip tekrar dene.", keyRequired: "Her hesap için bir anahtar ve en az bir klasör gerekli.",
+      other: "Diğer",
+    },
+    en: {
+      tabs: { overview: "Overview", tasks: "Tasks", segments: "Segments", settings: "Settings" },
+      neverScanned: "No scan yet",
+      lastScan: (d, n, t) => `Last scan ${d} · ${n} emails · ${t} new tasks`,
+      loading: "Loading data…",
+      noDb: "The data store isn't available in this view. Open the page on claude.ai while signed in.",
+      readOnly: "You can only view this page; changes won't be saved.",
+      kpiOpen: "Open tasks", kpiOverdue: "Overdue", kpiWeek: "This week", kpiMail: "Emails (30 days)",
+      kpiOpenSub: (h) => `${h} high priority`, kpiOverdueSub: "past due date", kpiWeekSub: "due within 7 days", kpiMailSub: (s) => `across ${s} segments`,
+      segmentsH: "Segments", segmentsSub: "Emails received per day, last 30 days",
+      mails: "emails", openTasks: "open tasks", seeTasks: "Tasks", seeMails: "Emails",
+      noOpen: "No open tasks",
+      runsH: "Scan history", noRuns: "No runs yet",
+      runLine: (d, n, t, s) => `${d} — ${n} emails, ${t} tasks${s ? `, ${s} new segments` : ""}`,
+      emptyH: "Run your first scan",
+      emptyP: "MailTasker reads the folders you pick, groups the emails by topic and lists what you need to do here.",
+      emptySteps: ["Add your accounts and the folders to scan in Settings.", "Send Claude the command below. Results appear on this page live."],
+      emptyPrompt: "scan my mail", copy: "Copy", copied: "Copied", goSettings: "Open Settings",
+      fSeg: "Segment", fPrio: "Priority", fStatus: "Status", fAcct: "Account", fSearch: "Search", all: "All",
+      searchPh: "Title, sender, subject…",
+      prio: { high: "High", med: "Medium", low: "Low" },
+      status: { open: "Open", done: "Done", dismissed: "Dismissed", snoozed: "Snoozed" },
+      buckets: { overdue: "Overdue", today: "Today", week: "This week", later: "Later", nodate: "No date", closed: "Closed" },
+      due: "Due", openMail: "Open email", snoozeTomorrow: "Tomorrow", snoozeWeek: "Next week", snoozeTitle: "Snooze",
+      dismiss: "Dismiss", reopen: "Reopen", markDone: "Mark as done", markOpen: "Mark as open",
+      snoozedUntil: (d) => `Snoozed until ${d}`, noTasks: "No tasks match these filters.",
+      segRename: "Name (TR)", segRenameEn: "Name (EN)", segDesc: "Description", save: "Save", saved: "Saved",
+      color: "Color", mergeInto: "Merge into", merge: "Merge", mergeConfirm: (a, b) => `“${a}” will be merged into “${b}”. New emails will go there on future scans.`,
+      cancel: "Cancel", unmerge: "Undo merge", mergedInto: (n) => `→ merged into ${n}`,
+      locked: "Named by you", recentMails: "Recent emails", noMails: "No emails", choose: "Choose…",
+      setH: "Accounts and folders to scan",
+      setP: "Claude uses this list the next time you say “scan my mail”.",
+      acctKey: "Account key", provider: "Provider", address: "Address", folders: "Folders (one per line)",
+      foldersHint: "For Gmail, a label name (e.g. Invoices, Projects/Alpha) or INBOX. For Outlook, a folder name (e.g. Inbox, Clients).",
+      addAcct: "Add account", removeAcct: "Remove account", lookback: "Days to look back on first scan", maxPerRun: "Max emails per scan",
+      outLang: "Task and summary language", langAuto: "Same as the email", saveSettings: "Save settings",
+      saveFail: "Couldn't save. Check your connection and try again.", keyRequired: "Each account needs a key and at least one folder.",
+      other: "Other",
+    },
+  };
+
+  // ---------- state ----------
+  const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+  const TAB_IDS = ["overview", "tasks", "segments", "settings"];
+  const initialTab = TAB_IDS.includes(location.hash.slice(1)) ? location.hash.slice(1) : (store.get("mt.tab") || "overview");
+  const S = {
+    lang: store.get("mt.lang") || ((navigator.language || "").toLowerCase().startsWith("tr") ? "tr" : "en"),
+    tab: TAB_IDS.includes(initialTab) ? initialTab : "overview",
+    db: undefined, canWrite: true,
+    loaded: { segments: false, emails: false, tasks: false, config: false, meta: false },
+    segments: new Map(), emails: new Map(), tasks: new Map(), config: null, meta: null,
+    f: { seg: "all", prio: "all", status: "open", acct: "all", q: "" },
+    openSeg: null, mergeDraft: {}, settingsDraft: null,
+  };
+  const t = () => I18N[S.lang];
+  const $ = (s, r = document) => r.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const safeUrl = (u) => (typeof u === "string" && /^https:\/\//i.test(u) ? u : null);
+  const COLORS = ["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8"];
+  const colorVar = (c) => (COLORS.includes(c) ? `var(--${c})` : "var(--muted)");
+
+  // ---------- dates ----------
+  const pad = (n) => String(n).padStart(2, "0");
+  const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const todayStr = () => ymd(new Date());
+  const addDays = (s, n) => { const [y, m, d] = s.split("-").map(Number); return ymd(new Date(y, m - 1, d + n)); };
+  const locale = () => (S.lang === "tr" ? "tr-TR" : "en-GB");
+  const fmtDay = (s) => { if (!s) return ""; const [y, m, d] = s.slice(0, 10).split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString(locale(), { day: "numeric", month: "short" }); };
+  const fmtDateTime = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleString(locale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); };
+  const localDayOf = (iso) => { const d = new Date(iso); return isNaN(d) ? null : ymd(d); };
+
+  // ---------- derived ----------
+  function resolveSeg(id) {
+    let cur = id, hops = 0;
+    while (cur && hops < 6) { const s = S.segments.get(cur); if (!s || !s.mergedInto || !S.segments.has(s.mergedInto)) break; cur = s.mergedInto; hops++; }
+    return cur;
+  }
+  function segName(id) {
+    const s = S.segments.get(id);
+    if (!s) return t().other;
+    const n = s.name || {};
+    return (typeof n === "string" ? n : n[S.lang] || n.tr || n.en) || id;
+  }
+  const segColor = (id) => colorVar(S.segments.get(id)?.color);
+  function effStatus(task) {
+    if (task.status === "snoozed" && task.snoozeUntil && task.snoozeUntil <= todayStr()) return "open";
+    return task.status || "open";
+  }
+  function bucketOf(task) {
+    const st = effStatus(task);
+    if (st === "done" || st === "dismissed") return "closed";
+    if (st === "snoozed") return "later";
+    if (!task.due) return "nodate";
+    const today = todayStr();
+    if (task.due < today) return "overdue";
+    if (task.due === today) return "today";
+    if (task.due <= addDays(today, 7)) return "week";
+    return "later";
+  }
+  const activeSegs = () => [...S.segments.entries()].filter(([, s]) => !s.mergedInto).map(([id]) => id);
+  const PRIO_RANK = { high: 0, med: 1, low: 2 };
+
+  // ---------- writes ----------
+  const pending = new Set();
+  async function write(path, data, kind = "update") {
+    if (!S.db || !S.canWrite) return false;
+    if (pending.has(path)) return false;
+    pending.add(path);
+    try { const ref = S.db.doc(path); await (kind === "set" ? ref.set(data) : ref.update(data)); return true; }
+    catch (e) {
+      if (e && e.code === "invalid_argument" && kind === "update") { S.canWrite = false; render(); }
+      toast(e && e.code === "quota_exceeded" ? e.message : t().saveFail);
+      return false;
+    } finally { pending.delete(path); }
+  }
+  let toastTimer;
+  function toast(msg) { const el = $("#toast"); el.textContent = msg; el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => (el.hidden = true), 2600); }
+
+  // ---------- header / tabs ----------
+  function renderChrome() {
+    document.documentElement.lang = S.lang;
+    for (const b of document.querySelectorAll("[data-lang]")) b.setAttribute("aria-pressed", String(b.dataset.lang === S.lang));
+    const run = S.meta?.runs?.[0];
+    $("#stamp .dot").className = "dot" + (run ? "" : " idle");
+    $("#stampText").textContent = run ? t().lastScan(fmtDateTime(run.at), run.newEmails ?? run.fetched ?? 0, run.newTasks ?? 0) : (allLoaded() || S.db === null ? t().neverScanned : t().loading);
+    const openCount = [...S.tasks.values()].filter((x) => effStatus(x) === "open").length;
+    const counts = { tasks: openCount, segments: activeSegs().length };
+    $("#tabs").innerHTML = TAB_IDS.map((id) => `<button type="button" role="tab" id="tab-${id}" aria-selected="${S.tab === id}" data-tab="${id}">${esc(t().tabs[id])}${counts[id] ? `<span class="count">${counts[id]}</span>` : ""}</button>`).join("");
+    let b = "";
+    if (S.db === null) b = `<div class="banner warn">${esc(t().noDb)}</div>`;
+    else if (!S.canWrite) b = `<div class="banner">${esc(t().readOnly)}</div>`;
+    $("#banner").innerHTML = b;
+  }
+  const allLoaded = () => Object.values(S.loaded).every(Boolean);
+  const hasData = () => S.segments.size > 0 || S.tasks.size > 0 || S.emails.size > 0;
+
+  // ---------- overview ----------
+  function sparkline(segId, days) {
+    const today = todayStr();
+    const keys = Array.from({ length: days }, (_, i) => addDays(today, i - days + 1));
+    const counts = Object.fromEntries(keys.map((k) => [k, 0]));
+    for (const e of S.emails.values()) { if (resolveSeg(e.segmentId) !== segId) continue; const d = localDayOf(e.date); if (d in counts) counts[d]++; }
+    const max = Math.max(1, ...Object.values(counts));
+    const W = 300, H = 40, gap = 2, bw = (W - gap * (days - 1)) / days;
+    const bars = keys.map((k, i) => {
+      const v = counts[k], h = v ? Math.max(3, (v / max) * (H - 4)) : 2;
+      return `<rect class="${v ? "" : "zero"}" x="${(i * (bw + gap)).toFixed(2)}" y="${(H - h).toFixed(2)}" width="${bw.toFixed(2)}" height="${h.toFixed(2)}" rx="${Math.min(2, bw / 2).toFixed(2)}" data-tip="${esc(fmtDay(k))}: ${v}"></rect>`;
+    }).join("");
+    return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${esc(t().segmentsSub)}">${bars}<line class="base" x1="0" x2="${W}" y1="${H - 0.5}" y2="${H - 0.5}"></line></svg>
+      <div class="spark-axis"><span>${esc(fmtDay(keys[0]))}</span><span>${esc(fmtDay(today))}</span></div>`;
+  }
+
+  function renderEmpty() {
+    return `<section class="empty">
+      <h2>${esc(t().emptyH)}</h2>
+      <p class="sub">${esc(t().emptyP)}</p>
+      <ol>${t().emptySteps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
+      <div class="prompt-box"><code id="promptText">${esc(t().emptyPrompt)}</code>
+        <button type="button" class="btn" data-act="copy">${esc(t().copy)}</button>
+        <button type="button" class="btn primary" data-act="goto" data-tab="settings">${esc(t().goSettings)}</button></div>
+    </section>`;
+  }
+
+  function renderOverview() {
+    if (!allLoaded() && !hasData()) return `<p class="muted">${esc(t().loading)}</p>`;
+    if (!hasData()) return renderEmpty();
+    const tasks = [...S.tasks.values()];
+    const open = tasks.filter((x) => effStatus(x) === "open");
+    const overdue = open.filter((x) => bucketOf(x) === "overdue").length;
+    const week = open.filter((x) => ["today", "week"].includes(bucketOf(x))).length;
+    const high = open.filter((x) => x.priority === "high").length;
+    const since = addDays(todayStr(), -29);
+    const recent = [...S.emails.values()].filter((e) => (localDayOf(e.date) || "") >= since);
+    const segs = activeSegs();
+    const segInfo = segs.map((id) => {
+      const mails = [...S.emails.values()].filter((e) => resolveSeg(e.segmentId) === id).length;
+      const segOpen = open.filter((x) => resolveSeg(x.segmentId) === id).sort((a, b) => (PRIO_RANK[a.priority] ?? 3) - (PRIO_RANK[b.priority] ?? 3) || String(a.due || "9").localeCompare(String(b.due || "9")));
+      return { id, mails, open: segOpen };
+    }).sort((a, b) => b.open.length - a.open.length || b.mails - a.mails);
+
+    const cards = segInfo.map(({ id, mails, open: so }) => `
+      <article class="seg-card" style="--sc:${segColor(id)}">
+        <header><div class="seg-name"><span class="swatch"></span><h3>${esc(segName(id))}</h3></div></header>
+        <div class="seg-stats"><span><b>${mails}</b> ${esc(t().mails)}</span><span><b>${so.length}</b> ${esc(t().openTasks)}</span></div>
+        <div>${sparkline(id, 30)}</div>
+        ${so.length ? `<ul class="seg-top">${so.slice(0, 3).map((x) => `<li><span class="prio ${esc(x.priority)}">${esc((t().prio[x.priority] || "").slice(0, 1))}</span><span>${esc(x.title)}</span></li>`).join("")}</ul>` : `<p class="muted" style="font-size:.88rem">${esc(t().noOpen)}</p>`}
+        <div class="card-foot"><button type="button" class="link-btn" data-act="segTasks" data-seg="${esc(id)}">${esc(t().seeTasks)} →</button><button type="button" class="link-btn" data-act="segMails" data-seg="${esc(id)}">${esc(t().seeMails)} →</button></div>
+      </article>`).join("");
+
+    const runs = (S.meta?.runs || []).slice(0, 6);
+    return `
+      <section class="kpis" aria-label="KPI">
+        <div class="kpi"><span class="eyebrow">${esc(t().kpiOpen)}</span><span class="v">${open.length}</span><small>${esc(t().kpiOpenSub(high))}</small></div>
+        <div class="kpi ${overdue ? "crit" : ""}"><span class="eyebrow">${esc(t().kpiOverdue)}</span><span class="v">${overdue}</span><small>${esc(t().kpiOverdueSub)}</small></div>
+        <div class="kpi"><span class="eyebrow">${esc(t().kpiWeek)}</span><span class="v">${week}</span><small>${esc(t().kpiWeekSub)}</small></div>
+        <div class="kpi"><span class="eyebrow">${esc(t().kpiMail)}</span><span class="v">${recent.length}</span><small>${esc(t().kpiMailSub(segs.length))}</small></div>
+      </section>
+      <section>
+        <div class="section-head"><h2>${esc(t().segmentsH)}</h2><span class="muted" style="font-size:.85rem">${esc(t().segmentsSub)}</span></div>
+        <div class="seg-grid">${cards}</div>
+      </section>
+      <section style="margin-top:28px">
+        <div class="section-head"><h2>${esc(t().runsH)}</h2></div>
+        ${runs.length ? `<ul class="runs mono">${runs.map((r) => `<li>${esc(t().runLine(fmtDateTime(r.at), r.newEmails ?? r.fetched ?? 0, r.newTasks ?? 0, r.newSegments ?? 0))}</li>`).join("")}</ul>` : `<p class="muted">${esc(t().noRuns)}</p>`}
+      </section>`;
+  }
+
+  // ---------- tasks ----------
+  function taskMatches(x) {
+    const f = S.f, st = effStatus(x);
+    if (f.status !== "all" && st !== f.status) return false;
+    if (f.seg !== "all" && resolveSeg(x.segmentId) !== f.seg) return false;
+    if (f.prio !== "all" && x.priority !== f.prio) return false;
+    if (f.acct !== "all" && x.account !== f.acct) return false;
+    if (f.q) {
+      const e = S.emails.get(x.emailId) || {};
+      const hay = [x.title, x.detail, e.subject, e.from?.name, e.from?.email].join(" ").toLocaleLowerCase(locale());
+      if (!hay.includes(f.q.toLocaleLowerCase(locale()))) return false;
+    }
+    return true;
+  }
+  function taskRow(id, x) {
+    const e = S.emails.get(x.emailId) || {};
+    const st = effStatus(x), closed = st === "done" || st === "dismissed";
+    const sid = resolveSeg(x.segmentId), link = safeUrl(e.link);
+    const over = !closed && x.due && x.due < todayStr();
+    const from = e.from ? (e.from.name || e.from.email || "") : "";
+    const actions = closed
+      ? `<button type="button" class="btn" data-act="task" data-op="open" data-id="${esc(id)}">${esc(t().reopen)}</button>`
+      : `<button type="button" class="btn" data-act="task" data-op="tomorrow" data-id="${esc(id)}" aria-label="${esc(t().snoozeTitle + ": " + t().snoozeTomorrow)}">⏱ ${esc(t().snoozeTomorrow)}</button>
+         <button type="button" class="btn" data-act="task" data-op="week" data-id="${esc(id)}" aria-label="${esc(t().snoozeTitle + ": " + t().snoozeWeek)}">⏱ ${esc(t().snoozeWeek)}</button>
+         <button type="button" class="btn danger" data-act="task" data-op="dismiss" data-id="${esc(id)}">${esc(t().dismiss)}</button>`;
+    return `<li class="task p-${esc(x.priority || "low")} ${st}">
+      <span class="stripe" aria-hidden="true"></span>
+      <button type="button" class="check" data-act="task" data-op="${st === "done" ? "open" : "done"}" data-id="${esc(id)}" aria-label="${esc(st === "done" ? t().markOpen : t().markDone)}" aria-pressed="${st === "done"}"><svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg></button>
+      <div class="t-body">
+        <span class="t-title">${esc(x.title)}</span>
+        ${x.detail ? `<span class="t-detail">${esc(x.detail)}</span>` : ""}
+        <div class="t-meta">
+          <span class="prio ${esc(x.priority)}">${esc(t().prio[x.priority] || "")}</span>
+          <span class="chip" style="--sc:${segColor(sid)}"><span class="swatch"></span>${esc(segName(sid))}</span>
+          ${x.due ? `<span class="mono due ${over ? "over" : ""}">${esc(t().due)} ${esc(fmtDay(x.due))}</span>` : ""}
+          ${st === "snoozed" && x.snoozeUntil ? `<span>${esc(t().snoozedUntil(fmtDay(x.snoozeUntil)))}</span>` : ""}
+          ${from ? `<span>${esc(from)}${e.subject ? ` · ${esc(e.subject)}` : ""}</span>` : ""}
+          ${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">${esc(t().openMail)} ↗</a>` : ""}
+        </div>
+      </div>
+      <div class="t-actions">${actions}</div>
+    </li>`;
+  }
+  function renderTasks() {
+    if (!allLoaded() && !hasData()) return `<p class="muted">${esc(t().loading)}</p>`;
+    if (!hasData()) return renderEmpty();
+    const opt = (v, label, cur) => `<option value="${esc(v)}" ${v === cur ? "selected" : ""}>${esc(label)}</option>`;
+    const accts = [...new Set([...S.tasks.values()].map((x) => x.account).filter(Boolean))].sort();
+    const segOpts = activeSegs().sort((a, b) => segName(a).localeCompare(segName(b), locale()));
+    const filters = `<div class="filters">
+      <div class="field search"><label for="fq">${esc(t().fSearch)}</label><input class="input" id="fq" type="search" value="${esc(S.f.q)}" placeholder="${esc(t().searchPh)}"></div>
+      <div class="field"><label for="fseg">${esc(t().fSeg)}</label><select class="input" id="fseg" data-f="seg">${opt("all", t().all, S.f.seg)}${segOpts.map((id) => opt(id, segName(id), S.f.seg)).join("")}</select></div>
+      <div class="field"><label for="fprio">${esc(t().fPrio)}</label><select class="input" id="fprio" data-f="prio">${opt("all", t().all, S.f.prio)}${["high", "med", "low"].map((p) => opt(p, t().prio[p], S.f.prio)).join("")}</select></div>
+      <div class="field"><label for="fstatus">${esc(t().fStatus)}</label><select class="input" id="fstatus" data-f="status">${opt("all", t().all, S.f.status)}${["open", "snoozed", "done", "dismissed"].map((p) => opt(p, t().status[p], S.f.status)).join("")}</select></div>
+      ${accts.length > 1 ? `<div class="field"><label for="facct">${esc(t().fAcct)}</label><select class="input" id="facct" data-f="acct">${opt("all", t().all, S.f.acct)}${accts.map((a) => opt(a, a, S.f.acct)).join("")}</select></div>` : ""}
+    </div>`;
+    const list = [...S.tasks.entries()].filter(([, x]) => taskMatches(x));
+    const order = ["overdue", "today", "week", "later", "nodate", "closed"];
+    const groups = Object.fromEntries(order.map((k) => [k, []]));
+    for (const [id, x] of list) groups[bucketOf(x)].push([id, x]);
+    const sortFn = ([, a], [, b]) => String(a.due || "9999").localeCompare(String(b.due || "9999")) || (PRIO_RANK[a.priority] ?? 3) - (PRIO_RANK[b.priority] ?? 3) || String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
+    const body = order.filter((k) => groups[k].length).map((k) => `
+      <section class="bucket ${k}"><h2>${esc(t().buckets[k])} <span class="mono">${groups[k].length}</span></h2>
+        <ul class="task-list">${groups[k].sort(sortFn).map(([id, x]) => taskRow(id, x)).join("")}</ul></section>`).join("");
+    return filters + `<div id="taskBody">${body || `<p class="muted">${esc(t().noTasks)}</p>`}</div>`;
+  }
+
+  // ---------- segments ----------
+  function renderSegments() {
+    if (!allLoaded() && !hasData()) return `<p class="muted">${esc(t().loading)}</p>`;
+    if (!S.segments.size) return renderEmpty();
+    const ids = [...S.segments.keys()].sort((a, b) => {
+      const ma = S.segments.get(a).mergedInto ? 1 : 0, mb = S.segments.get(b).mergedInto ? 1 : 0;
+      return ma - mb || segName(a).localeCompare(segName(b), locale());
+    });
+    const rows = ids.map((id) => {
+      const s = S.segments.get(id), merged = !!s.mergedInto && S.segments.has(s.mergedInto);
+      const mails = [...S.emails.values()].filter((e) => resolveSeg(e.segmentId) === id).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+      const openN = [...S.tasks.values()].filter((x) => effStatus(x) === "open" && resolveSeg(x.segmentId) === id).length;
+      const name = typeof s.name === "object" && s.name ? s.name : { tr: String(s.name || ""), en: String(s.name || "") };
+      const draft = S.mergeDraft[id];
+      const targets = activeSegs().filter((x) => x !== id);
+      const isOpen = S.openSeg === id;
+      return `<details class="seg-row ${merged ? "merged" : ""}" data-seg="${esc(id)}" ${isOpen ? "open" : ""} style="--sc:${segColor(id)}">
+        <summary>
+          <span class="seg-name"><span class="swatch"></span><h3>${esc(segName(id))}</h3>${s.userLocked ? `<span class="chip">${esc(t().locked)}</span>` : ""}</span>
+          <span class="seg-stats">${merged ? `<span>${esc(t().mergedInto(segName(s.mergedInto)))}</span>` : `<span><b>${mails.length}</b> ${esc(t().mails)}</span><span><b>${openN}</b> ${esc(t().openTasks)}</span>`}</span>
+        </summary>
+        ${isOpen ? `<div class="seg-body">
+          ${s.description ? `<p class="sub">${esc(s.description)}</p>` : ""}
+          ${merged ? `<div><button type="button" class="btn" data-act="unmerge" data-seg="${esc(id)}">${esc(t().unmerge)}</button></div>` : `
+          <form class="form-grid" data-form="rename" data-seg="${esc(id)}">
+            <div class="field"><label for="ntr-${esc(id)}">${esc(t().segRename)}</label><input class="input" id="ntr-${esc(id)}" name="tr" value="${esc(name.tr || "")}" maxlength="60" required></div>
+            <div class="field"><label for="nen-${esc(id)}">${esc(t().segRenameEn)}</label><input class="input" id="nen-${esc(id)}" name="en" value="${esc(name.en || "")}" maxlength="60"></div>
+            <div class="field"><label for="nd-${esc(id)}">${esc(t().segDesc)}</label><input class="input" id="nd-${esc(id)}" name="desc" value="${esc(s.description || "")}" maxlength="200"></div>
+            <div><button type="submit" class="btn primary">${esc(t().save)}</button></div>
+          </form>
+          <div class="field"><span class="eyebrow">${esc(t().color)}</span><div class="colors">${COLORS.map((c) => `<button type="button" style="--sc:var(--${c})" aria-label="${c}" aria-pressed="${s.color === c}" data-act="color" data-seg="${esc(id)}" data-color="${c}"></button>`).join("")}</div></div>
+          ${targets.length ? `<div class="form-grid" style="padding-top:0">
+            <div class="field"><label for="mg-${esc(id)}">${esc(t().mergeInto)}</label><select class="input" id="mg-${esc(id)}" data-act="mergeSel" data-seg="${esc(id)}"><option value="">${esc(t().choose)}</option>${targets.map((x) => `<option value="${esc(x)}" ${draft === x ? "selected" : ""}>${esc(segName(x))}</option>`).join("")}</select></div>
+          </div>
+          ${draft ? `<div class="confirm"><span>${esc(t().mergeConfirm(segName(id), segName(draft)))}</span><button type="button" class="btn primary" data-act="merge" data-seg="${esc(id)}">${esc(t().merge)}</button><button type="button" class="btn" data-act="mergeCancel" data-seg="${esc(id)}">${esc(t().cancel)}</button></div>` : ""}` : ""}`}
+          <div><span class="eyebrow">${esc(t().recentMails)}</span>
+            ${mails.length ? `<ul class="mail-list">${mails.slice(0, 25).map((e) => { const l = safeUrl(e.link); return `<li class="mail">
+              <span class="subj">${l ? `<a href="${esc(l)}" target="_blank" rel="noopener noreferrer">${esc(e.subject || "—")}</a>` : esc(e.subject || "—")}</span>
+              <span class="when mono">${esc(fmtDay(localDayOf(e.date) || ""))}</span>
+              <span class="from">${esc(e.from?.name || "")} ${e.from?.email ? `&lt;${esc(e.from.email)}&gt;` : ""} · <span class="mono">${esc(e.account || "")}/${esc(e.folder || "")}</span></span>
+              ${e.summary ? `<span class="sum">${esc(e.summary)}</span>` : ""}</li>`; }).join("")}</ul>` : `<p class="muted">${esc(t().noMails)}</p>`}
+          </div>
+        </div>` : ""}
+      </details>`;
+    }).join("");
+    return `<div class="seg-rows">${rows}</div>`;
+  }
+
+  // ---------- settings ----------
+  const blankAcct = () => ({ key: "", provider: "gmail", address: "", folders: "INBOX" });
+  function draftFromConfig() {
+    const c = S.config || {};
+    return {
+      accounts: (c.accounts || []).map((a) => ({ key: a.key || "", provider: a.provider || "gmail", address: a.address || "", folders: (a.folders || []).join("\n") })),
+      lookbackDays: c.lookbackDays ?? 30, maxPerRun: c.maxPerRun ?? 150, lang: c.lang || "auto",
+    };
+  }
+  function renderSettings() {
+    if (!S.loaded.config && S.db !== null) return `<p class="muted">${esc(t().loading)}</p>`;
+    if (!S.settingsDraft) { S.settingsDraft = draftFromConfig(); if (!S.settingsDraft.accounts.length) S.settingsDraft.accounts.push(blankAcct()); }
+    const d = S.settingsDraft;
+    const accts = d.accounts.map((a, i) => `<div class="acct">
+      <div class="field"><label for="ak-${i}">${esc(t().acctKey)}</label><input class="input mono" id="ak-${i}" data-acct="${i}" data-k="key" value="${esc(a.key)}" placeholder="gmail-kisisel" maxlength="40"></div>
+      <div class="field"><label for="ap-${i}">${esc(t().provider)}</label><select class="input" id="ap-${i}" data-acct="${i}" data-k="provider"><option value="gmail" ${a.provider === "gmail" ? "selected" : ""}>Gmail</option><option value="m365" ${a.provider === "m365" ? "selected" : ""}>Outlook / Microsoft 365</option></select></div>
+      <div class="field"><label for="aa-${i}">${esc(t().address)}</label><input class="input" id="aa-${i}" data-acct="${i}" data-k="address" type="email" value="${esc(a.address)}" placeholder="ben@ornek.com"></div>
+      <div class="field wide"><label for="af-${i}">${esc(t().folders)}</label><textarea class="input" id="af-${i}" data-acct="${i}" data-k="folders" rows="3">${esc(a.folders)}</textarea><span class="hint">${esc(t().foldersHint)}</span></div>
+      <div class="row-end wide"><button type="button" class="btn danger" data-act="rmAcct" data-i="${i}">${esc(t().removeAcct)}</button></div>
+    </div>`).join("");
+    return `<form class="panel" data-form="settings" style="max-width:860px">
+      <div><h2>${esc(t().setH)}</h2><p class="sub" style="margin-top:4px">${esc(t().setP)}</p></div>
+      ${accts}
+      <div><button type="button" class="btn" data-act="addAcct">+ ${esc(t().addAcct)}</button></div>
+      <div class="form-grid" style="padding-top:0">
+        <div class="field"><label for="sLook">${esc(t().lookback)}</label><input class="input mono" id="sLook" type="number" min="1" max="365" data-k="lookbackDays" value="${esc(d.lookbackDays)}"></div>
+        <div class="field"><label for="sMax">${esc(t().maxPerRun)}</label><input class="input mono" id="sMax" type="number" min="10" max="500" data-k="maxPerRun" value="${esc(d.maxPerRun)}"></div>
+        <div class="field"><label for="sLang">${esc(t().outLang)}</label><select class="input" id="sLang" data-k="lang">
+          <option value="auto" ${d.lang === "auto" ? "selected" : ""}>${esc(t().langAuto)}</option><option value="tr" ${d.lang === "tr" ? "selected" : ""}>Türkçe</option><option value="en" ${d.lang === "en" ? "selected" : ""}>English</option></select></div>
+      </div>
+      <div class="row-end"><button type="submit" class="btn primary" ${S.canWrite && S.db ? "" : "disabled"}>${esc(t().saveSettings)}</button></div>
+    </form>`;
+  }
+
+  // ---------- render ----------
+  function render() {
+    renderChrome();
+    const view = $("#view");
+    const focusId = document.activeElement && document.activeElement.id;
+    const caret = focusId && document.activeElement.selectionStart;
+    view.innerHTML = { overview: renderOverview, tasks: renderTasks, segments: renderSegments, settings: renderSettings }[S.tab]();
+    if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); try { if (caret != null) el.setSelectionRange(caret, caret); } catch {} } }
+  }
+  // Live snapshots re-render the view; hold off while someone is typing in a segment form so the edit isn't lost.
+  let rafId = 0, deferred = false;
+  const typingInForm = () => { const el = document.activeElement; return !!(el && el.matches("input:not([type=search]),textarea") && el.closest('[data-form="rename"]')); };
+  const schedule = () => {
+    if (typingInForm()) { deferred = true; return; }
+    if (!rafId) rafId = requestAnimationFrame(() => { rafId = 0; render(); });
+  };
+  document.addEventListener("focusout", () => { if (deferred) setTimeout(() => { if (!typingInForm()) { deferred = false; schedule(); } }, 0); });
+
+  // ---------- events ----------
+  document.addEventListener("click", async (ev) => {
+    const langBtn = ev.target.closest("[data-lang]");
+    if (langBtn) { S.lang = langBtn.dataset.lang; store.set("mt.lang", S.lang); render(); return; }
+    const tabBtn = ev.target.closest("[data-tab]");
+    if (tabBtn && !tabBtn.dataset.act) { S.tab = tabBtn.dataset.tab; store.set("mt.tab", S.tab); render(); return; }
+    const a = ev.target.closest("[data-act]");
+    if (!a) return;
+    const act = a.dataset.act, seg = a.dataset.seg;
+    if (act === "goto") { S.tab = a.dataset.tab; store.set("mt.tab", S.tab); render(); }
+    else if (act === "copy") {
+      const txt = $("#promptText").textContent;
+      try { await navigator.clipboard.writeText(txt); toast(t().copied); }
+      catch { const r = document.createRange(); r.selectNodeContents($("#promptText")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+    }
+    else if (act === "segTasks") { S.f = { ...S.f, seg, status: "open" }; S.tab = "tasks"; render(); }
+    else if (act === "segMails") { S.openSeg = seg; S.tab = "segments"; render(); $(`details[data-seg="${CSS.escape(seg)}"]`)?.scrollIntoView({ block: "start" }); }
+    else if (act === "task") {
+      const id = a.dataset.id, op = a.dataset.op;
+      const patch = op === "done" ? { status: "done", doneAt: new Date().toISOString(), snoozeUntil: null }
+        : op === "dismiss" ? { status: "dismissed", snoozeUntil: null }
+        : op === "open" ? { status: "open", snoozeUntil: null }
+        : op === "tomorrow" ? { status: "snoozed", snoozeUntil: addDays(todayStr(), 1) }
+        : op === "week" ? { status: "snoozed", snoozeUntil: addDays(todayStr(), 7) } : null;
+      if (patch) { a.disabled = true; await write(`tasks/${id}`, patch); a.disabled = false; }
+    }
+    else if (act === "color") { await write(`segments/${seg}`, { color: a.dataset.color }); }
+    else if (act === "mergeCancel") { delete S.mergeDraft[seg]; render(); }
+    else if (act === "merge") {
+      const target = S.mergeDraft[seg]; if (!target) return;
+      a.disabled = true;
+      if (await write(`segments/${seg}`, { mergedInto: target })) { delete S.mergeDraft[seg]; S.openSeg = target; }
+      render();
+    }
+    else if (act === "unmerge") { await write(`segments/${seg}`, { mergedInto: null }); }
+    else if (act === "addAcct") { S.settingsDraft.accounts.push(blankAcct()); render(); }
+    else if (act === "rmAcct") { S.settingsDraft.accounts.splice(Number(a.dataset.i), 1); render(); }
+  });
+
+  document.addEventListener("toggle", (ev) => {
+    const d = ev.target;
+    if (!(d instanceof HTMLDetailsElement) || !d.dataset.seg) return;
+    if (d.open && S.openSeg !== d.dataset.seg) { S.openSeg = d.dataset.seg; schedule(); }
+    else if (!d.open && S.openSeg === d.dataset.seg) { S.openSeg = null; schedule(); }
+  }, true);
+
+  let qTimer;
+  document.addEventListener("input", (ev) => {
+    const el = ev.target;
+    if (el.id === "fq") { clearTimeout(qTimer); qTimer = setTimeout(() => { S.f.q = el.value.trim(); render(); }, 180); return; }
+    if (el.dataset.acct != null) { S.settingsDraft.accounts[Number(el.dataset.acct)][el.dataset.k] = el.value; return; }
+    if (el.closest('[data-form="settings"]') && el.dataset.k) { S.settingsDraft[el.dataset.k] = el.value; }
+  });
+  document.addEventListener("change", (ev) => {
+    const el = ev.target;
+    if (el.dataset.f) { S.f[el.dataset.f] = el.value; render(); }
+    else if (el.dataset.act === "mergeSel") { if (el.value) S.mergeDraft[el.dataset.seg] = el.value; else delete S.mergeDraft[el.dataset.seg]; render(); }
+  });
+
+  const keyify = (s) => s.toLowerCase().trim().replace(/[^a-z0-9_\-.~:@+]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+  document.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const form = ev.target, kind = form.dataset.form;
+    const btn = form.querySelector('[type="submit"]');
+    if (kind === "rename") {
+      const fd = new FormData(form), seg = form.dataset.seg;
+      const tr = String(fd.get("tr") || "").trim(), en = String(fd.get("en") || "").trim() || tr;
+      if (!tr) return;
+      btn.disabled = true;
+      if (await write(`segments/${seg}`, { name: { tr, en }, description: String(fd.get("desc") || "").trim(), userLocked: true })) toast(t().saved);
+      btn.disabled = false;
+    } else if (kind === "settings") {
+      const d = S.settingsDraft;
+      const accounts = d.accounts.map((a) => ({ key: keyify(a.key || a.address.split("@")[0] || ""), provider: a.provider === "m365" ? "m365" : "gmail", address: a.address.trim(), folders: a.folders.split("\n").map((f) => f.trim()).filter(Boolean) }));
+      if (accounts.some((a) => !a.key || !a.folders.length)) { toast(t().keyRequired); return; }
+      const clamp = (v, lo, hi, def) => { const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : def; };
+      const data = { accounts, lookbackDays: clamp(d.lookbackDays, 1, 365, 30), maxPerRun: clamp(d.maxPerRun, 10, 500, 150), lang: ["auto", "tr", "en"].includes(d.lang) ? d.lang : "auto", updatedAt: new Date().toISOString() };
+      btn.disabled = true;
+      if (await write("config/main", data, "set")) { S.settingsDraft = null; toast(t().saved); }
+      btn.disabled = false;
+    }
+  });
+
+  // chart tooltip
+  const tip = $("#tip");
+  document.addEventListener("pointermove", (ev) => {
+    const r = ev.target.closest && ev.target.closest("rect[data-tip]");
+    if (!r) { tip.hidden = true; return; }
+    tip.textContent = r.dataset.tip; tip.hidden = false;
+    const x = Math.min(ev.clientX + 12, innerWidth - tip.offsetWidth - 8);
+    tip.style.left = x + "px"; tip.style.top = (ev.clientY - 32) + "px";
+  });
+
+  // ---------- boot ----------
+  render();
+  (async () => {
+    const db = window.claude && window.claude.use ? await window.claude.use("db") : null;
+    S.db = db;
+    if (!db) { render(); return; }
+    const user = await window.claude.use("user");
+    if (user) { try { const c = await user.can("data.write"); if (c === false) S.canWrite = false; } catch {} }
+    const fail = () => {};
+    const intoMap = (key) => (snap) => { const m = new Map(); for (const d of snap.docs) m.set(d.id, d.data()); S[key] = m; S.loaded[key] = true; schedule(); };
+    db.collection("segments").onSnapshot(intoMap("segments"), fail);
+    db.collection("tasks").limit(1000).onSnapshot(intoMap("tasks"), fail);
+    db.collection("emails").orderBy("date", "desc").limit(1000).onSnapshot(intoMap("emails"), fail);
+    db.doc("config/main").onSnapshot((s) => { S.config = s.exists ? s.data() : null; S.loaded.config = true; if (S.tab !== "settings") S.settingsDraft = null; schedule(); }, fail);
+    db.doc("meta/state").onSnapshot((s) => { S.meta = s.exists ? s.data() : null; S.loaded.meta = true; schedule(); }, fail);
+  })();
+})();
+</script>
