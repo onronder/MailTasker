@@ -46,6 +46,8 @@ After that, saying "scan my mail" again only processes new mail.
 
 ## Using the dashboard / Dashboard
 
+- **Mailbox filter**: with more than one mailbox or folder, a bar under the tabs narrows every view to the
+  mailboxes and folder you pick. Your choice is remembered in the browser.
 - **Overview**: open, overdue and this-week tasks, one card per topic with a 30-day mail chart.
 - **Tasks**: grouped by due date. Mark done, snooze to tomorrow or next week, dismiss.
 - **Segments**: rename, recolor or merge topics. Future scans follow your changes.

@@ -202,6 +202,17 @@ details.seg-row.merged { opacity: .7; }
 .cols-2 { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 20px; margin-top: 28px; }
 @media (max-width: 860px) { .cols-2 { grid-template-columns: minmax(0, 1fr); } }
 
+/* Mailbox scope bar */
+.scope { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: -8px 0 20px; }
+.scope-chips { display: flex; gap: 6px; overflow-x: auto; min-width: 0; max-width: 100%; padding-bottom: 2px; }
+.scope-chip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 5px 12px; cursor: pointer; white-space: nowrap; font-size: .85rem; color: var(--fg-2); }
+.scope-chip:hover { background: var(--surface-2); }
+.scope-chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--fg); }
+.scope-chip .prov { font-size: .68rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.scope-chip .n { font-family: var(--f-mono); font-size: .75rem; color: var(--muted); }
+.scope-folder { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: var(--fg-2); }
+.scope-folder select { width: auto; min-width: 9rem; padding: 5px 10px; }
+.scope-empty { background: var(--surface); border: 1px dashed var(--line); border-radius: var(--r); padding: 20px; color: var(--fg-2); }
 #tip { position: fixed; pointer-events: none; background: var(--fg); color: var(--bg); font-size: .78rem; padding: 4px 8px; border-radius: 6px; font-family: var(--f-mono); z-index: 20; white-space: nowrap; }
 #toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: .88rem; z-index: 30; max-width: calc(100% - 32px); }
 @media (prefers-reduced-motion: no-preference) { .btn, .check, .tabs button { transition: background-color .12s, border-color .12s, color .12s; } }
@@ -220,6 +231,7 @@ details.seg-row.merged { opacity: .7; }
   </header>
 
   <nav class="tabs" role="tablist" id="tabs"></nav>
+  <div id="scopeBar" class="scope" hidden></div>
   <div id="banner"></div>
   <main id="view"></main>
 </div>
@@ -250,7 +262,8 @@ details.seg-row.merged { opacity: .7; }
       emptyP: "MailTasker seçtiğin klasörlerdeki mailleri okur, konulara ayırır ve yapılacak işleri buraya listeler.",
       emptySteps: ["Ayarlar sekmesinden hesaplarını ve taranacak klasörleri ekle.", "Claude'a aşağıdaki komutu yaz. Sonuçlar bu sayfada canlı olarak belirir."],
       emptyPrompt: "mailleri tara", copy: "Kopyala", copied: "Kopyalandı", goSettings: "Ayarlara git",
-      fSeg: "Segment", fPrio: "Öncelik", fStatus: "Durum", fAcct: "Hesap", fSearch: "Ara", all: "Tümü",
+      fSeg: "Segment", fPrio: "Öncelik", fStatus: "Durum", fSearch: "Ara", all: "Tümü",
+      scopeLabel: "Mailbox filtresi", allBoxes: "Tüm mailbox'lar", folder: "Klasör", allFolders: "Tüm klasörler", clearScope: "Filtreyi temizle", scopeEmpty: "Bu filtrede mail ya da görev yok.",
       searchPh: "Başlık, gönderen, konu…",
       prio: { high: "Yüksek", med: "Orta", low: "Düşük" },
       status: { open: "Açık", done: "Tamamlandı", dismissed: "Yoksayıldı", snoozed: "Ertelendi" },
@@ -289,7 +302,8 @@ details.seg-row.merged { opacity: .7; }
       emptyP: "MailTasker reads the folders you pick, groups the emails by topic and lists what you need to do here.",
       emptySteps: ["Add your accounts and the folders to scan in Settings.", "Send Claude the command below. Results appear on this page live."],
       emptyPrompt: "scan my mail", copy: "Copy", copied: "Copied", goSettings: "Open Settings",
-      fSeg: "Segment", fPrio: "Priority", fStatus: "Status", fAcct: "Account", fSearch: "Search", all: "All",
+      fSeg: "Segment", fPrio: "Priority", fStatus: "Status", fSearch: "Search", all: "All",
+      scopeLabel: "Mailbox filter", allBoxes: "All mailboxes", folder: "Folder", allFolders: "All folders", clearScope: "Clear filter", scopeEmpty: "No emails or tasks match this filter.",
       searchPh: "Title, sender, subject…",
       prio: { high: "High", med: "Medium", low: "Low" },
       status: { open: "Open", done: "Done", dismissed: "Dismissed", snoozed: "Snoozed" },
@@ -315,6 +329,10 @@ details.seg-row.merged { opacity: .7; }
   // ---------- state ----------
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
   const TAB_IDS = ["overview", "tasks", "segments", "settings"];
+  function loadScope() {
+    try { const v = JSON.parse(store.get("mt.scope") || "null"); if (v && Array.isArray(v.accts)) return { accts: v.accts.filter((a) => typeof a === "string"), folder: typeof v.folder === "string" ? v.folder : "all" }; } catch {}
+    return { accts: [], folder: "all" };
+  }
   const initialTab = TAB_IDS.includes(location.hash.slice(1)) ? location.hash.slice(1) : (store.get("mt.tab") || "overview");
   const S = {
     lang: store.get("mt.lang") || ((navigator.language || "").toLowerCase().startsWith("tr") ? "tr" : "en"),
@@ -322,7 +340,8 @@ details.seg-row.merged { opacity: .7; }
     db: undefined, canWrite: true,
     loaded: { segments: false, emails: false, tasks: false, config: false, meta: false },
     segments: new Map(), emails: new Map(), tasks: new Map(), config: null, meta: null,
-    f: { seg: "all", prio: "all", status: "open", acct: "all", q: "" },
+    f: { seg: "all", prio: "all", status: "open", q: "" },
+    scope: loadScope(),
     openSeg: null, mergeDraft: {}, settingsDraft: null,
   };
   const t = () => I18N[S.lang];
@@ -373,6 +392,51 @@ details.seg-row.merged { opacity: .7; }
   const activeSegs = () => [...S.segments.entries()].filter(([, s]) => !s.mergedInto).map(([id]) => id);
   const PRIO_RANK = { high: 0, med: 1, low: 2 };
 
+  // ---------- mailbox scope ----------
+  const PROVIDER_LABEL = { gmail: "Gmail", m365: "Outlook" };
+  function mailboxes() {
+    const m = new Map();
+    for (const a of S.config?.accounts || []) if (a && a.key) m.set(a.key, { key: a.key, provider: a.provider, address: a.address || "" });
+    for (const x of [...S.emails.values(), ...S.tasks.values()]) if (x.account && !m.has(x.account)) m.set(x.account, { key: x.account, provider: x.provider, address: "" });
+    return [...m.values()];
+  }
+  const inScope = (acct, folder) => (!S.scope.accts.length || S.scope.accts.includes(acct)) && (S.scope.folder === "all" || folder === S.scope.folder);
+  const emailInScope = (e) => inScope(e.account, e.folder);
+  const taskInScope = (x) => inScope(x.account, S.emails.get(x.emailId)?.folder);
+  const scopedEmails = () => [...S.emails.values()].filter(emailInScope);
+  const scopedTasks = () => [...S.tasks.values()].filter(taskInScope);
+  const scopeActive = () => S.scope.accts.length > 0 || S.scope.folder !== "all";
+  const saveScope = () => store.set("mt.scope", JSON.stringify(S.scope));
+  function scopeFolders() {
+    const set = new Set();
+    for (const e of S.emails.values()) if (e.folder && (!S.scope.accts.length || S.scope.accts.includes(e.account))) set.add(e.folder);
+    return [...set].sort((a, b) => a.localeCompare(b, locale()));
+  }
+  function renderScope() {
+    const el = $("#scopeBar");
+    const boxes = mailboxes();
+    if (allLoaded()) {
+      // Drop selections that no longer exist (removed account, folder with no mail).
+      const keys = new Set(boxes.map((b) => b.key));
+      const accts = S.scope.accts.filter((a) => keys.has(a));
+      const folder = S.scope.folder === "all" || scopeFolders().includes(S.scope.folder) ? S.scope.folder : "all";
+      if (accts.length !== S.scope.accts.length || folder !== S.scope.folder) { S.scope = { accts, folder }; saveScope(); }
+    }
+    const folders = scopeFolders();
+    const allFolderCount = new Set([...S.emails.values()].map((e) => e.folder).filter(Boolean)).size;
+    if (!hasData() || (boxes.length < 2 && allFolderCount < 2)) { el.hidden = true; el.innerHTML = ""; return; }
+    const perBox = new Map();
+    for (const e of S.emails.values()) perBox.set(e.account, (perBox.get(e.account) || 0) + 1);
+    const chips = boxes.length > 1 ? `<div class="scope-chips" role="group" aria-label="${esc(t().scopeLabel)}">
+        <button type="button" class="scope-chip" data-act="scopeAll" aria-pressed="${!S.scope.accts.length}">${esc(t().allBoxes)} <span class="n">${S.emails.size}</span></button>
+        ${boxes.map((b) => `<button type="button" class="scope-chip" data-act="scopeAcct" data-acct="${esc(b.key)}" aria-pressed="${S.scope.accts.includes(b.key)}">${PROVIDER_LABEL[b.provider] ? `<span class="prov" lang="en">${PROVIDER_LABEL[b.provider]}</span>` : ""}<span>${esc(b.address || b.key)}</span><span class="n">${perBox.get(b.key) || 0}</span></button>`).join("")}
+      </div>` : "";
+    const folderSel = folders.length > 1 || S.scope.folder !== "all" ? `<label class="scope-folder" for="scopeFolder">${esc(t().folder)}
+        <select class="input" id="scopeFolder"><option value="all">${esc(t().allFolders)}</option>${folders.map((f) => `<option value="${esc(f)}" ${f === S.scope.folder ? "selected" : ""}>${esc(f)}</option>`).join("")}</select></label>` : "";
+    el.innerHTML = chips + folderSel + (scopeActive() ? `<button type="button" class="link-btn" data-act="scopeClear">${esc(t().clearScope)}</button>` : "");
+    el.hidden = false;
+  }
+
   // ---------- writes ----------
   const pending = new Set();
   async function write(path, data, kind = "update") {
@@ -396,8 +460,9 @@ details.seg-row.merged { opacity: .7; }
     const run = S.meta?.runs?.[0];
     $("#stamp .dot").className = "dot" + (run ? "" : " idle");
     $("#stampText").textContent = run ? t().lastScan(fmtDateTime(run.at), run.newEmails ?? run.fetched ?? 0, run.newTasks ?? 0) : (allLoaded() || S.db === null ? t().neverScanned : t().loading);
-    const openCount = [...S.tasks.values()].filter((x) => effStatus(x) === "open").length;
+    const openCount = scopedTasks().filter((x) => effStatus(x) === "open").length;
     const counts = { tasks: openCount, segments: activeSegs().length };
+    renderScope();
     $("#tabs").innerHTML = TAB_IDS.map((id) => `<button type="button" role="tab" id="tab-${id}" aria-selected="${S.tab === id}" data-tab="${id}">${esc(t().tabs[id])}${counts[id] ? `<span class="count">${counts[id]}</span>` : ""}</button>`).join("");
     let b = "";
     if (S.db === null) b = `<div class="banner warn">${esc(t().noDb)}</div>`;
@@ -412,7 +477,7 @@ details.seg-row.merged { opacity: .7; }
     const today = todayStr();
     const keys = Array.from({ length: days }, (_, i) => addDays(today, i - days + 1));
     const counts = Object.fromEntries(keys.map((k) => [k, 0]));
-    for (const e of S.emails.values()) { if (resolveSeg(e.segmentId) !== segId) continue; const d = localDayOf(e.date); if (d in counts) counts[d]++; }
+    for (const e of S.emails.values()) { if (resolveSeg(e.segmentId) !== segId || !emailInScope(e)) continue; const d = localDayOf(e.date); if (d in counts) counts[d]++; }
     const max = Math.max(1, ...Object.values(counts));
     const W = 300, H = 40, gap = 2, bw = (W - gap * (days - 1)) / days;
     const bars = keys.map((k, i) => {
@@ -437,19 +502,20 @@ details.seg-row.merged { opacity: .7; }
   function renderOverview() {
     if (!allLoaded() && !hasData()) return `<p class="muted">${esc(t().loading)}</p>`;
     if (!hasData()) return renderEmpty();
-    const tasks = [...S.tasks.values()];
+    const tasks = scopedTasks(), emails = scopedEmails();
     const open = tasks.filter((x) => effStatus(x) === "open");
     const overdue = open.filter((x) => bucketOf(x) === "overdue").length;
     const week = open.filter((x) => ["today", "week"].includes(bucketOf(x))).length;
     const high = open.filter((x) => x.priority === "high").length;
     const since = addDays(todayStr(), -29);
-    const recent = [...S.emails.values()].filter((e) => (localDayOf(e.date) || "") >= since);
-    const segs = activeSegs();
-    const segInfo = segs.map((id) => {
-      const mails = [...S.emails.values()].filter((e) => resolveSeg(e.segmentId) === id).length;
+    const recent = emails.filter((e) => (localDayOf(e.date) || "") >= since);
+    const segInfo = activeSegs().map((id) => {
+      const mails = emails.filter((e) => resolveSeg(e.segmentId) === id).length;
       const segOpen = open.filter((x) => resolveSeg(x.segmentId) === id).sort((a, b) => (PRIO_RANK[a.priority] ?? 3) - (PRIO_RANK[b.priority] ?? 3) || String(a.due || "9").localeCompare(String(b.due || "9")));
       return { id, mails, open: segOpen };
-    }).sort((a, b) => b.open.length - a.open.length || b.mails - a.mails);
+    }).filter((x) => !scopeActive() || x.mails || x.open.length)
+      .sort((a, b) => b.open.length - a.open.length || b.mails - a.mails);
+    const segs = segInfo.map((x) => x.id);
 
     const cards = segInfo.map(({ id, mails, open: so }) => `
       <article class="seg-card" style="--sc:${segColor(id)}">
@@ -470,7 +536,7 @@ details.seg-row.merged { opacity: .7; }
       </section>
       <section>
         <div class="section-head"><h2>${esc(t().segmentsH)}</h2><span class="muted" style="font-size:.85rem">${esc(t().segmentsSub)}</span></div>
-        <div class="seg-grid">${cards}</div>
+        ${cards ? `<div class="seg-grid">${cards}</div>` : `<p class="scope-empty">${esc(t().scopeEmpty)}</p>`}
       </section>
       <section style="margin-top:28px">
         <div class="section-head"><h2>${esc(t().runsH)}</h2></div>
@@ -484,7 +550,7 @@ details.seg-row.merged { opacity: .7; }
     if (f.status !== "all" && st !== f.status) return false;
     if (f.seg !== "all" && resolveSeg(x.segmentId) !== f.seg) return false;
     if (f.prio !== "all" && x.priority !== f.prio) return false;
-    if (f.acct !== "all" && x.account !== f.acct) return false;
+    if (!taskInScope(x)) return false;
     if (f.q) {
       const e = S.emails.get(x.emailId) || {};
       const hay = [x.title, x.detail, e.subject, e.from?.name, e.from?.email].join(" ").toLocaleLowerCase(locale());
@@ -525,14 +591,12 @@ details.seg-row.merged { opacity: .7; }
     if (!allLoaded() && !hasData()) return `<p class="muted">${esc(t().loading)}</p>`;
     if (!hasData()) return renderEmpty();
     const opt = (v, label, cur) => `<option value="${esc(v)}" ${v === cur ? "selected" : ""}>${esc(label)}</option>`;
-    const accts = [...new Set([...S.tasks.values()].map((x) => x.account).filter(Boolean))].sort();
     const segOpts = activeSegs().sort((a, b) => segName(a).localeCompare(segName(b), locale()));
     const filters = `<div class="filters">
       <div class="field search"><label for="fq">${esc(t().fSearch)}</label><input class="input" id="fq" type="search" value="${esc(S.f.q)}" placeholder="${esc(t().searchPh)}"></div>
       <div class="field"><label for="fseg">${esc(t().fSeg)}</label><select class="input" id="fseg" data-f="seg">${opt("all", t().all, S.f.seg)}${segOpts.map((id) => opt(id, segName(id), S.f.seg)).join("")}</select></div>
       <div class="field"><label for="fprio">${esc(t().fPrio)}</label><select class="input" id="fprio" data-f="prio">${opt("all", t().all, S.f.prio)}${["high", "med", "low"].map((p) => opt(p, t().prio[p], S.f.prio)).join("")}</select></div>
       <div class="field"><label for="fstatus">${esc(t().fStatus)}</label><select class="input" id="fstatus" data-f="status">${opt("all", t().all, S.f.status)}${["open", "snoozed", "done", "dismissed"].map((p) => opt(p, t().status[p], S.f.status)).join("")}</select></div>
-      ${accts.length > 1 ? `<div class="field"><label for="facct">${esc(t().fAcct)}</label><select class="input" id="facct" data-f="acct">${opt("all", t().all, S.f.acct)}${accts.map((a) => opt(a, a, S.f.acct)).join("")}</select></div>` : ""}
     </div>`;
     const list = [...S.tasks.entries()].filter(([, x]) => taskMatches(x));
     const order = ["overdue", "today", "week", "later", "nodate", "closed"];
@@ -555,8 +619,8 @@ details.seg-row.merged { opacity: .7; }
     });
     const rows = ids.map((id) => {
       const s = S.segments.get(id), merged = !!s.mergedInto && S.segments.has(s.mergedInto);
-      const mails = [...S.emails.values()].filter((e) => resolveSeg(e.segmentId) === id).sort((a, b) => String(b.date).localeCompare(String(a.date)));
-      const openN = [...S.tasks.values()].filter((x) => effStatus(x) === "open" && resolveSeg(x.segmentId) === id).length;
+      const mails = scopedEmails().filter((e) => resolveSeg(e.segmentId) === id).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+      const openN = scopedTasks().filter((x) => effStatus(x) === "open" && resolveSeg(x.segmentId) === id).length;
       const name = typeof s.name === "object" && s.name ? s.name : { tr: String(s.name || ""), en: String(s.name || "") };
       const draft = S.mergeDraft[id];
       const targets = activeSegs().filter((x) => x !== id);
@@ -660,6 +724,12 @@ details.seg-row.merged { opacity: .7; }
       try { await navigator.clipboard.writeText(txt); toast(t().copied); }
       catch { const r = document.createRange(); r.selectNodeContents($("#promptText")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
     }
+    else if (act === "scopeAll" || act === "scopeClear") { S.scope = { accts: [], folder: "all" }; saveScope(); render(); }
+    else if (act === "scopeAcct") {
+      const k = a.dataset.acct, cur = S.scope.accts;
+      S.scope = { ...S.scope, accts: cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k] };
+      saveScope(); render();
+    }
     else if (act === "segTasks") { S.f = { ...S.f, seg, status: "open" }; S.tab = "tasks"; render(); }
     else if (act === "segMails") { S.openSeg = seg; S.tab = "segments"; render(); $(`details[data-seg="${CSS.escape(seg)}"]`)?.scrollIntoView({ block: "start" }); }
     else if (act === "task") {
@@ -700,7 +770,8 @@ details.seg-row.merged { opacity: .7; }
   });
   document.addEventListener("change", (ev) => {
     const el = ev.target;
-    if (el.dataset.f) { S.f[el.dataset.f] = el.value; render(); }
+    if (el.id === "scopeFolder") { S.scope = { ...S.scope, folder: el.value }; saveScope(); render(); }
+    else if (el.dataset.f) { S.f[el.dataset.f] = el.value; render(); }
     else if (el.dataset.act === "mergeSel") { if (el.value) S.mergeDraft[el.dataset.seg] = el.value; else delete S.mergeDraft[el.dataset.seg]; render(); }
   });
 
