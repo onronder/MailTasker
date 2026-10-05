@@ -1,6 +1,11 @@
 # Segmentasyon ve task çıkarma kuralları
 
 ## Segment nedir
+
+> Kişi alanlarında (`config.spaces[].people`) bu bölüm yerine `SKILL.md` 2b'deki kişi kuralı uygulanır:
+> segment = maili ilgilendiren kişi (ör. Kuzey, Poyraz), birden çoksa "Ortak", hiçbiri değilse "Genel".
+> Görev başlıklarına kişi adını yazmaya gerek yok; segment zaten gösterir.
+
 Kullanıcının hayatındaki **kalıcı bir konu** veya iş akışı: bir müşteri, proje, tedarikçi grubu,
 bir süreç (faturalar, işe alım, seyahat), bir topluluk. Tek seferlik bir mail segment değildir.
 

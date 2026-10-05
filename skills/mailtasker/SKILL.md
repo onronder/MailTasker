@@ -77,6 +77,25 @@ taramalar hatırlanmaz; kullanıcıya canlı dashboard için Artifact yayınlama
   Kullanıcı bir isteği zaten yanıtladıysa (belgeyi gönderdi, ödemeyi yaptığını yazdı) o istek için task açma.
   Gönderilmiş öğeler taranan klasör sayılmaz; oradan `emails` kaydı yazma.
 
+## 2b. Alanı belirle (config.spaces varsa)
+
+`config.spaces` kullanıcının dashboard'daki ayrı görünümleridir (ör. "Fittechs" ve okul klasörü "Açı").
+Her mail için:
+- Klasörü bir alanın `folders` listesinde olan (büyük/küçük harf ve Türkçe karakter farkı gözetmeden, `Aci` = `Açı`)
+  mail o alana aittir; `accounts` verilmişse hesap da eşleşmeli.
+- Hiçbir alana uymayan mail, `folders` listesi boş olan alana (genel alan) gider.
+- `emails.space`, `tasks.space` ve yeni `segments.space` alanlarına bu id'yi yaz.
+- Segment seçerken yalnızca **aynı alandaki** segmentleri kullan.
+
+**Kişi alanları** (`people` dolu, ör. `["Kuzey", "Poyraz"]`): bu alanda segmentler konu değil kişidir.
+- Mailin **tam gövdesinde** (konu + gövde) hangi isimlerin geçtiğine bak. Arama özeti 250 karakterle sınırlıdır;
+  özette isim yoksa gövdeyi `read_resource` ile oku. Okul sistemlerinin "Öğrenci: Ad Soyad" satırı en güçlü sinyaldir.
+- Tek kişi → `seg-<alan>-<kişi>` (ör. `seg-aci-kuzey`); birden çok kişi → `seg-<alan>-ortak`
+  ("Ortak / Shared"); hiçbiri → `seg-<alan>-genel` ("Genel / General").
+- `emails.people` ve `tasks.people` alanlarına geçen kişileri yaz (`["kuzey"]`).
+- İsim geçmiyorsa sınıf, okul binası gibi kesin bir ipucu varsa ve daha önce o kişiye atanmış maillerle birebir
+  örtüşüyorsa (ör. "7. Sınıf" hep Kuzey) o kişiye ata; emin değilsen `genel`.
+
 ## 3. Segmentle ve task çıkar
 
 `references/extraction.md` kurallarını uygula. Özetle:

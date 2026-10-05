@@ -69,6 +69,19 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* Header */
 .top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; padding-bottom: 16px; }
 .brand { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.brand-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.spaces { display: flex; flex-wrap: wrap; gap: 8px; }
+.space-btn { --sp: var(--muted); display: inline-flex; align-items: center; gap: 8px; border: 1.5px solid var(--line); background: var(--surface); color: var(--fg-2); border-radius: 999px; padding: 6px 14px; cursor: pointer; font-family: var(--f-display); font-weight: 600; font-size: 1rem; }
+.space-btn .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--sp); flex: none; }
+.space-btn .n { font-family: var(--f-mono); font-size: .75rem; font-weight: 500; color: var(--muted); }
+.space-btn:hover { border-color: var(--sp); }
+.space-btn[aria-pressed="true"] { border-color: var(--sp); color: var(--fg); background: color-mix(in srgb, var(--sp) 14%, var(--surface)); }
+.top-actions { display: flex; align-items: center; gap: 10px; }
+.icon-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 12px; cursor: pointer; font-size: .85rem; font-weight: 600; color: var(--fg-2); display: inline-flex; gap: 6px; align-items: center; }
+.icon-btn[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.icon-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; }
+.space-card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; border-left: 4px solid var(--sp, var(--line)); }
+.space-card .wide { grid-column: 1 / -1; }
 .stamp { display: inline-flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; font-size: .85rem; color: var(--fg-2); }
 .stamp .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); flex: none; }
 .stamp .dot.idle { background: var(--muted); }
@@ -78,7 +91,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 20px; overflow-x: auto; }
 .tabs button { border: 0; background: none; padding: 10px 14px; cursor: pointer; font-weight: 600; color: var(--fg-2); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
-.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--space-accent, var(--accent)); }
 .tabs .count { font-family: var(--f-mono); font-size: .75rem; background: var(--surface-2); border-radius: 999px; padding: 0 7px; color: var(--fg-2); }
 
 .banner { border: 1px solid var(--line); background: var(--surface); border-radius: var(--r); padding: 12px 14px; margin-bottom: 16px; color: var(--fg-2); }
@@ -221,12 +234,15 @@ details.seg-row.merged { opacity: .7; }
 <div class="wrap">
   <header class="top">
     <div class="brand">
-      <h1>MailTasker</h1>
+      <div class="brand-row"><h1>MailTasker</h1><div class="spaces" id="spaces" role="group" hidden></div></div>
       <div class="stamp" id="stamp"><span class="dot idle"></span><span id="stampText"></span></div>
     </div>
-    <div class="seg-toggle" role="group" aria-label="Language">
-      <button type="button" id="langTr" data-lang="tr">TR</button>
-      <button type="button" id="langEn" data-lang="en">EN</button>
+    <div class="top-actions">
+      <button type="button" class="icon-btn" id="settingsBtn" data-act="settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span id="settingsLabel"></span></button>
+      <div class="seg-toggle" role="group" aria-label="Language">
+        <button type="button" id="langTr" data-lang="tr">TR</button>
+        <button type="button" id="langEn" data-lang="en">EN</button>
+      </div>
     </div>
   </header>
 
@@ -275,6 +291,10 @@ details.seg-row.merged { opacity: .7; }
       color: "Renk", mergeInto: "Şununla birleştir", merge: "Birleştir", mergeConfirm: (a, b) => `“${a}” segmenti “${b}” içine birleştirilecek. Sonraki taramalarda yeni mailler de oraya gider.`,
       cancel: "Vazgeç", unmerge: "Birleştirmeyi geri al", mergedInto: (n) => `→ ${n} içine birleştirildi`,
       locked: "Adı sen belirledin", recentMails: "Son mailler", noMails: "Mail yok", choose: "Seç…",
+      spacesH: "Alanlar", spacesP: "Her alanın kendi Özet, Görevler ve Segmentler görünümü vardır. Klasörü boş bırakılan alan, başka bir alana ait olmayan bütün mailleri alır.",
+      spaceName: "Alan adı", spaceFolders: "Klasörler (virgülle ayır)", spacePeople: "Kişiler (virgülle ayır, isteğe bağlı)",
+      peopleHint: "Mail metninde bu isimler geçerse mail o kişinin segmentine düşer.", addSpace: "Alan ekle", removeSpace: "Alanı kaldır", spaceColor: "Renk",
+      spaceEmpty: "Bu alanda henüz mail yok. Claude'a “mailleri tara” yazınca dolacak.", allMail: "Tüm mailler",
       setH: "Taranacak hesaplar ve klasörler",
       setP: "Claude bir sonraki “mailleri tara” komutunda bu listeyi kullanır.",
       acctKey: "Hesap anahtarı", provider: "Sağlayıcı", address: "Adres", folders: "Klasörler (virgül ya da satırla ayır)",
@@ -315,6 +335,10 @@ details.seg-row.merged { opacity: .7; }
       color: "Color", mergeInto: "Merge into", merge: "Merge", mergeConfirm: (a, b) => `“${a}” will be merged into “${b}”. New emails will go there on future scans.`,
       cancel: "Cancel", unmerge: "Undo merge", mergedInto: (n) => `→ merged into ${n}`,
       locked: "Named by you", recentMails: "Recent emails", noMails: "No emails", choose: "Choose…",
+      spacesH: "Spaces", spacesP: "Each space has its own Overview, Tasks and Segments. A space with no folders gets every email that doesn't belong to another space.",
+      spaceName: "Space name", spaceFolders: "Folders (comma separated)", spacePeople: "People (comma separated, optional)",
+      peopleHint: "Emails that mention one of these names go to that person's segment.", addSpace: "Add space", removeSpace: "Remove space", spaceColor: "Color",
+      spaceEmpty: "No email in this space yet. Ask Claude to “scan my mail” to fill it.", allMail: "All mail",
       setH: "Accounts and folders to scan",
       setP: "Claude uses this list the next time you say “scan my mail”.",
       acctKey: "Account key", provider: "Provider", address: "Address", folders: "Folders (separate with commas or new lines)",
@@ -329,6 +353,7 @@ details.seg-row.merged { opacity: .7; }
   // ---------- state ----------
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
   const TAB_IDS = ["overview", "tasks", "segments", "settings"];
+  const STRIP_TABS = ["overview", "tasks", "segments"];
   function loadScope() {
     try { const v = JSON.parse(store.get("mt.scope") || "null"); if (v && Array.isArray(v.accts)) return { accts: v.accts.filter((a) => typeof a === "string"), folder: typeof v.folder === "string" ? v.folder : "all" }; } catch {}
     return { accts: [], folder: "all" };
@@ -342,6 +367,7 @@ details.seg-row.merged { opacity: .7; }
     segments: new Map(), emails: new Map(), tasks: new Map(), config: null, meta: null,
     f: { seg: "all", prio: "all", status: "open", q: "" },
     scope: loadScope(),
+    space: store.get("mt.space") || null,
     openSeg: null, mergeDraft: {}, settingsDraft: null,
   };
   const t = () => I18N[S.lang];
@@ -389,8 +415,46 @@ details.seg-row.merged { opacity: .7; }
     if (task.due <= addDays(today, 7)) return "week";
     return "later";
   }
-  const activeSegs = () => [...S.segments.entries()].filter(([, s]) => !s.mergedInto).map(([id]) => id);
+  const activeSegs = () => [...S.segments.entries()].filter(([id, s]) => !s.mergedInto && inSpace(spaceOfSeg(id))).map(([id]) => id);
   const PRIO_RANK = { high: 0, med: 1, low: 2 };
+
+  // ---------- spaces ----------
+  // A space is a separate view of the data (e.g. a work mailbox vs. one folder of it). Defined in config.spaces.
+  const norm = (x) => String(x || "").toLocaleLowerCase("tr-TR").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ı/g, "i").trim();
+  const spaces = () => (Array.isArray(S.config?.spaces) ? S.config.spaces.filter((x) => x && x.id) : []);
+  const catchAll = () => spaces().find((x) => !(x.folders || []).length) || spaces()[0] || null;
+  function spaceOfEmail(e) {
+    const list = spaces();
+    if (!list.length || !e) return null;
+    if (e.space && list.some((x) => x.id === e.space)) return e.space;
+    const hit = list.find((x) => (x.folders || []).some((f) => norm(f) === norm(e.folder)) && (!(x.accounts || []).length || x.accounts.includes(e.account)));
+    return (hit || catchAll())?.id ?? null;
+  }
+  function spaceOfTask(x) {
+    if (!spaces().length) return null;
+    if (x.space && spaces().some((sp) => sp.id === x.space)) return x.space;
+    const e = S.emails.get(x.emailId);
+    return e ? spaceOfEmail(e) : catchAll()?.id ?? null;
+  }
+  function spaceOfSeg(id) {
+    if (!spaces().length) return null;
+    const sg = S.segments.get(id);
+    return sg && sg.space && spaces().some((sp) => sp.id === sg.space) ? sg.space : catchAll()?.id ?? null;
+  }
+  const curSpace = () => { const list = spaces(); if (!list.length) return null; return list.some((x) => x.id === S.space) ? S.space : list[0].id; };
+  const spaceObj = (id) => spaces().find((x) => x.id === id) || null;
+  const inSpace = (sid) => !curSpace() || sid === curSpace();
+  function renderSpaces() {
+    const el = $("#spaces"), list = spaces();
+    if (!list.length) { el.hidden = true; el.innerHTML = ""; document.documentElement.style.removeProperty("--space-accent"); return; }
+    const cur = curSpace();
+    const openBy = new Map();
+    for (const x of S.tasks.values()) if (effStatus(x) === "open") { const k = spaceOfTask(x); openBy.set(k, (openBy.get(k) || 0) + 1); }
+    el.innerHTML = list.map((x) => `<button type="button" class="space-btn" data-act="space" data-space="${esc(x.id)}" aria-pressed="${x.id === cur}" style="--sp:${colorVar(x.color)}"><span class="dot"></span>${esc(x.name || x.id)}${openBy.get(x.id) ? `<span class="n">${openBy.get(x.id)}</span>` : ""}</button>`).join("");
+    el.setAttribute("aria-label", t().spacesH);
+    el.hidden = false;
+    document.documentElement.style.setProperty("--space-accent", colorVar(spaceObj(cur)?.color));
+  }
 
   // ---------- mailbox scope ----------
   const PROVIDER_LABEL = { gmail: "Gmail", m365: "Outlook" };
@@ -401,15 +465,15 @@ details.seg-row.merged { opacity: .7; }
     return [...m.values()];
   }
   const inScope = (acct, folder) => (!S.scope.accts.length || S.scope.accts.includes(acct)) && (S.scope.folder === "all" || folder === S.scope.folder);
-  const emailInScope = (e) => inScope(e.account, e.folder);
-  const taskInScope = (x) => inScope(x.account, S.emails.get(x.emailId)?.folder);
+  const emailInScope = (e) => inSpace(spaceOfEmail(e)) && inScope(e.account, e.folder);
+  const taskInScope = (x) => inSpace(spaceOfTask(x)) && inScope(x.account, S.emails.get(x.emailId)?.folder);
   const scopedEmails = () => [...S.emails.values()].filter(emailInScope);
   const scopedTasks = () => [...S.tasks.values()].filter(taskInScope);
   const scopeActive = () => S.scope.accts.length > 0 || S.scope.folder !== "all";
   const saveScope = () => store.set("mt.scope", JSON.stringify(S.scope));
   function scopeFolders() {
     const set = new Set();
-    for (const e of S.emails.values()) if (e.folder && (!S.scope.accts.length || S.scope.accts.includes(e.account))) set.add(e.folder);
+    for (const e of S.emails.values()) if (e.folder && inSpace(spaceOfEmail(e)) && (!S.scope.accts.length || S.scope.accts.includes(e.account))) set.add(e.folder);
     return [...set].sort((a, b) => a.localeCompare(b, locale()));
   }
   function renderScope() {
@@ -423,12 +487,15 @@ details.seg-row.merged { opacity: .7; }
       if (accts.length !== S.scope.accts.length || folder !== S.scope.folder) { S.scope = { accts, folder }; saveScope(); }
     }
     const folders = scopeFolders();
-    const allFolderCount = new Set([...S.emails.values()].map((e) => e.folder).filter(Boolean)).size;
-    if (!hasData() || (boxes.length < 2 && allFolderCount < 2)) { el.hidden = true; el.innerHTML = ""; return; }
+    const spaceEmails = [...S.emails.values()].filter((e) => inSpace(spaceOfEmail(e)));
+    // Inside a space, only offer mailboxes that actually have mail there.
+    if (curSpace()) { const used = new Set(spaceEmails.map((e) => e.account)); boxes.splice(0, boxes.length, ...boxes.filter((x) => used.has(x.key))); }
+    const allFolderCount = new Set(spaceEmails.map((e) => e.folder).filter(Boolean)).size;
+    if (!hasData() || S.tab === "settings" || (boxes.length < 2 && allFolderCount < 2)) { el.hidden = true; el.innerHTML = ""; return; }
     const perBox = new Map();
-    for (const e of S.emails.values()) perBox.set(e.account, (perBox.get(e.account) || 0) + 1);
+    for (const e of spaceEmails) perBox.set(e.account, (perBox.get(e.account) || 0) + 1);
     const chips = boxes.length > 1 ? `<div class="scope-chips" role="group" aria-label="${esc(t().scopeLabel)}">
-        <button type="button" class="scope-chip" data-act="scopeAll" aria-pressed="${!S.scope.accts.length}">${esc(t().allBoxes)} <span class="n">${S.emails.size}</span></button>
+        <button type="button" class="scope-chip" data-act="scopeAll" aria-pressed="${!S.scope.accts.length}">${esc(t().allBoxes)} <span class="n">${spaceEmails.length}</span></button>
         ${boxes.map((b) => `<button type="button" class="scope-chip" data-act="scopeAcct" data-acct="${esc(b.key)}" aria-pressed="${S.scope.accts.includes(b.key)}">${PROVIDER_LABEL[b.provider] ? `<span class="prov" lang="en">${PROVIDER_LABEL[b.provider]}</span>` : ""}<span>${esc(b.address || b.key)}</span><span class="n">${perBox.get(b.key) || 0}</span></button>`).join("")}
       </div>` : "";
     const folderSel = folders.length > 1 || S.scope.folder !== "all" ? `<label class="scope-folder" for="scopeFolder">${esc(t().folder)}
@@ -463,7 +530,10 @@ details.seg-row.merged { opacity: .7; }
     const openCount = scopedTasks().filter((x) => effStatus(x) === "open").length;
     const counts = { tasks: openCount, segments: activeSegs().length };
     renderScope();
-    $("#tabs").innerHTML = TAB_IDS.map((id) => `<button type="button" role="tab" id="tab-${id}" aria-selected="${S.tab === id}" data-tab="${id}">${esc(t().tabs[id])}${counts[id] ? `<span class="count">${counts[id]}</span>` : ""}</button>`).join("");
+    renderSpaces();
+    $("#settingsLabel").textContent = t().tabs.settings;
+    $("#settingsBtn").setAttribute("aria-pressed", String(S.tab === "settings"));
+    $("#tabs").innerHTML = STRIP_TABS.map((id) => `<button type="button" role="tab" id="tab-${id}" aria-selected="${S.tab === id}" data-tab="${id}">${esc(t().tabs[id])}${counts[id] ? `<span class="count">${counts[id]}</span>` : ""}</button>`).join("");
     let b = "";
     if (S.db === null) b = `<div class="banner warn">${esc(t().noDb)}</div>`;
     else if (!S.canWrite) b = `<div class="banner">${esc(t().readOnly)}</div>`;
@@ -503,6 +573,7 @@ details.seg-row.merged { opacity: .7; }
     if (!allLoaded() && !hasData()) return `<p class="muted">${esc(t().loading)}</p>`;
     if (!hasData()) return renderEmpty();
     const tasks = scopedTasks(), emails = scopedEmails();
+    if (curSpace() && !emails.length && !tasks.length && !scopeActive()) return `<p class="scope-empty">${esc(t().spaceEmpty)}</p>`;
     const open = tasks.filter((x) => effStatus(x) === "open");
     const overdue = open.filter((x) => bucketOf(x) === "overdue").length;
     const week = open.filter((x) => ["today", "week"].includes(bucketOf(x))).length;
@@ -613,7 +684,7 @@ details.seg-row.merged { opacity: .7; }
   function renderSegments() {
     if (!allLoaded() && !hasData()) return `<p class="muted">${esc(t().loading)}</p>`;
     if (!S.segments.size) return renderEmpty();
-    const ids = [...S.segments.keys()].sort((a, b) => {
+    const ids = [...S.segments.keys()].filter((id) => inSpace(spaceOfSeg(id))).sort((a, b) => {
       const ma = S.segments.get(a).mergedInto ? 1 : 0, mb = S.segments.get(b).mergedInto ? 1 : 0;
       return ma - mb || segName(a).localeCompare(segName(b), locale());
     });
@@ -664,6 +735,7 @@ details.seg-row.merged { opacity: .7; }
     return {
       accounts: (c.accounts || []).map((a) => ({ key: a.key || "", provider: a.provider || "gmail", address: a.address || "", folders: (a.folders || []).join("\n") })),
       lookbackDays: c.lookbackDays ?? 30, maxPerRun: c.maxPerRun ?? 150, lang: c.lang || "auto",
+      spaces: spaces().map((x) => ({ id: x.id, name: x.name || "", color: x.color || "c1", folders: (x.folders || []).join(", "), people: (x.people || []).map((p) => (typeof p === "string" ? p : p.name)).join(", "), accounts: x.accounts || [] })),
     };
   }
   function renderSettings() {
@@ -677,8 +749,18 @@ details.seg-row.merged { opacity: .7; }
       <div class="field wide"><label for="af-${i}">${esc(t().folders)}</label><textarea class="input" id="af-${i}" data-acct="${i}" data-k="folders" rows="3">${esc(a.folders)}</textarea><span class="hint">${esc(t().foldersHint)}</span></div>
       <div class="row-end wide"><button type="button" class="btn danger" data-act="rmAcct" data-i="${i}">${esc(t().removeAcct)}</button></div>
     </div>`).join("");
+    const spaceCards = d.spaces.map((x, i) => `<div class="space-card" style="--sp:${colorVar(x.color)}">
+      <div class="field"><label for="sn-${i}">${esc(t().spaceName)}</label><input class="input" id="sn-${i}" data-space-i="${i}" data-k="name" value="${esc(x.name)}" maxlength="30"></div>
+      <div class="field"><label for="sf-${i}">${esc(t().spaceFolders)}</label><input class="input" id="sf-${i}" data-space-i="${i}" data-k="folders" value="${esc(x.folders)}" placeholder="Aci"></div>
+      <div class="field"><span class="eyebrow">${esc(t().spaceColor)}</span><div class="colors">${COLORS.map((c) => `<button type="button" style="--sc:var(--${c})" aria-label="${c}" aria-pressed="${x.color === c}" data-act="spaceColor" data-i="${i}" data-color="${c}"></button>`).join("")}</div></div>
+      <div class="field wide"><label for="sp-${i}">${esc(t().spacePeople)}</label><input class="input" id="sp-${i}" data-space-i="${i}" data-k="people" value="${esc(x.people)}" placeholder="Kuzey, Poyraz"><span class="hint">${esc(t().peopleHint)}</span></div>
+      <div class="row-end wide"><button type="button" class="btn danger" data-act="rmSpace" data-i="${i}">${esc(t().removeSpace)}</button></div>
+    </div>`).join("");
     return `<form class="panel" data-form="settings" style="max-width:860px">
-      <div><h2>${esc(t().setH)}</h2><p class="sub" style="margin-top:4px">${esc(t().setP)}</p></div>
+      <div><h2>${esc(t().spacesH)}</h2><p class="sub" style="margin-top:4px">${esc(t().spacesP)}</p></div>
+      ${spaceCards}
+      <div><button type="button" class="btn" data-act="addSpace">+ ${esc(t().addSpace)}</button></div>
+      <div style="border-top:1px solid var(--line);padding-top:14px"><h2>${esc(t().setH)}</h2><p class="sub" style="margin-top:4px">${esc(t().setP)}</p></div>
       ${accts}
       <div><button type="button" class="btn" data-act="addAcct">+ ${esc(t().addAcct)}</button></div>
       <div class="form-grid" style="padding-top:0">
@@ -719,6 +801,17 @@ details.seg-row.merged { opacity: .7; }
     if (!a) return;
     const act = a.dataset.act, seg = a.dataset.seg;
     if (act === "goto") { S.tab = a.dataset.tab; store.set("mt.tab", S.tab); render(); }
+    else if (act === "settings") { S.tab = S.tab === "settings" ? "overview" : "settings"; store.set("mt.tab", S.tab); render(); }
+    else if (act === "space") {
+      S.space = a.dataset.space; store.set("mt.space", S.space);
+      S.scope = { accts: [], folder: "all" }; saveScope();
+      S.f = { ...S.f, seg: "all" }; S.openSeg = null;
+      if (S.tab === "settings") S.tab = "overview";
+      render();
+    }
+    else if (act === "addSpace") { S.settingsDraft.spaces.push({ id: "", name: "", color: COLORS[S.settingsDraft.spaces.length % COLORS.length], folders: "", people: "", accounts: [] }); render(); }
+    else if (act === "rmSpace") { S.settingsDraft.spaces.splice(Number(a.dataset.i), 1); render(); }
+    else if (act === "spaceColor") { S.settingsDraft.spaces[Number(a.dataset.i)].color = a.dataset.color; render(); }
     else if (act === "copy") {
       const txt = $("#promptText").textContent;
       try { await navigator.clipboard.writeText(txt); toast(t().copied); }
@@ -766,6 +859,7 @@ details.seg-row.merged { opacity: .7; }
     const el = ev.target;
     if (el.id === "fq") { clearTimeout(qTimer); qTimer = setTimeout(() => { S.f.q = el.value.trim(); render(); }, 180); return; }
     if (el.dataset.acct != null) { S.settingsDraft.accounts[Number(el.dataset.acct)][el.dataset.k] = el.value; return; }
+    if (el.dataset.spaceI != null) { S.settingsDraft.spaces[Number(el.dataset.spaceI)][el.dataset.k] = el.value; return; }
     if (el.closest('[data-form="settings"]') && el.dataset.k) { S.settingsDraft[el.dataset.k] = el.value; }
   });
   document.addEventListener("change", (ev) => {
@@ -792,7 +886,18 @@ details.seg-row.merged { opacity: .7; }
       const accounts = d.accounts.map((a) => ({ key: keyify(a.key || a.address.split("@")[0] || ""), provider: a.provider === "m365" ? "m365" : "gmail", address: a.address.trim(), folders: a.folders.split(/[\n,]+/).map((f) => f.trim()).filter(Boolean) }));
       if (accounts.some((a) => !a.key || !a.folders.length)) { toast(t().keyRequired); return; }
       const clamp = (v, lo, hi, def) => { const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : def; };
-      const data = { accounts, lookbackDays: clamp(d.lookbackDays, 1, 365, 30), maxPerRun: clamp(d.maxPerRun, 10, 500, 150), lang: ["auto", "tr", "en"].includes(d.lang) ? d.lang : "auto", updatedAt: new Date().toISOString() };
+      const splitList = (v) => String(v || "").split(/[\n,]+/).map((f) => f.trim()).filter(Boolean);
+      const usedIds = new Set();
+      const spacesOut = d.spaces.filter((x) => x.name.trim()).map((x) => {
+        let id = x.id || keyify(norm(x.name)) || "alan";
+        while (usedIds.has(id)) id += "-2";
+        usedIds.add(id);
+        const out = { id, name: x.name.trim(), color: COLORS.includes(x.color) ? x.color : "c1", folders: splitList(x.folders) };
+        const people = splitList(x.people); if (people.length) out.people = people;
+        if (x.accounts && x.accounts.length) out.accounts = x.accounts;
+        return out;
+      });
+      const data = { ...(S.config || {}), accounts, spaces: spacesOut, lookbackDays: clamp(d.lookbackDays, 1, 365, 30), maxPerRun: clamp(d.maxPerRun, 10, 500, 150), lang: ["auto", "tr", "en"].includes(d.lang) ? d.lang : "auto", updatedAt: new Date().toISOString() };
       btn.disabled = true;
       if (await write("config/main", data, "set")) { S.settingsDraft = null; toast(t().saved); }
       btn.disabled = false;

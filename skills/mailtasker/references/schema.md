@@ -26,6 +26,16 @@ Dashboard Ayarlar sekmesi ve skill tarafından yazılır.
 ```
 - `key`: kısa, id-güvenli hesap anahtarı (doküman id'lerinde kullanılır).
 - `lang`: `"auto"` → task/özet mailin dilinde; `"tr"` / `"en"` → hep o dilde.
+- `spaces` (isteğe bağlı): dashboard'da üstte seçilen ayrı görünümler. Dashboard'un Ayarlar'ından düzenlenir.
+  ```json
+  "spaces": [
+    { "id": "fittechs", "name": "Fittechs", "color": "c1", "folders": [] },
+    { "id": "aci", "name": "Açı", "color": "c2", "folders": ["Aci"], "people": ["Kuzey", "Poyraz"] }
+  ]
+  ```
+  `folders` boş olan alan genel alandır: başka alana ait olmayan her mail ona gider. `accounts` (hesap anahtarları)
+  verilirse eşleşme o hesaplarla sınırlanır. `people` doluysa o alandaki segmentler kişiye göredir (`SKILL.md` 2b).
+  Ayarlar'dan kaydederken `config/main` tümüyle yazıldığı için skill bu alanı korumalıdır.
 
 ## `meta/state`
 ```json
@@ -53,6 +63,9 @@ Dashboard Ayarlar sekmesi ve skill tarafından yazılır.
 - `color`: `c1`…`c8` (dashboard paleti). Yeni segmente henüz kullanılmamış ilk rengi ver.
 - `userLocked`: kullanıcı dashboard'da adı düzenlediyse `true` → skill `name`/`description`'a dokunmaz.
 - `mergedInto`: kullanıcı bu segmenti başka birine birleştirdiyse hedef id. Yeni mailleri hedefe ata.
+- `space`: segmentin ait olduğu alan id'si. Yoksa genel alana aittir.
+- Kişi alanlarında segment id'si `seg-<alan>-<kişi>`, `seg-<alan>-ortak`, `seg-<alan>-genel`; ek alan `person`
+  (ör. `"kuzey"`).
 
 ## `emails/{emailId}`
 `emailId`: Gmail için `{accountKey}_{messageId}`. Outlook/M365 Graph id'leri ~150 karakterdir ve aynı klasördeki
@@ -77,6 +90,8 @@ alanında durur. Geçersiz karakter (`/`, `=`, boşluk) → `-`.
   "processedAt": "2026-10-03T08:01:12Z"
 }
 ```
+`space` ve `people` (kişi alanlarında, ör. `["kuzey"]`) alanları da yazılır.
+
 Dedupe: yazmadan önce `query` ile `where: [["messageId","in",[...en fazla 30 id]]]` kontrol et
 ya da `list` ile tüm id'leri bir kez çek (küçük depoda daha ucuz).
 

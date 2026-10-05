@@ -46,6 +46,9 @@ After that, saying "scan my mail" again only processes new mail.
 
 ## Using the dashboard / Dashboard
 
+- **Spaces**: split one mailbox into separate views next to the MailTasker title (e.g. "Work" and a
+  school folder). A space can list people (e.g. two children); its emails are then grouped by the person
+  they mention. Set them up in Settings › Spaces.
 - **Mailbox filter**: with more than one mailbox or folder, a bar under the tabs narrows every view to the
   mailboxes and folder you pick. Your choice is remembered in the browser.
 - **Overview**: open, overdue and this-week tasks, one card per topic with a 30-day mail chart.
