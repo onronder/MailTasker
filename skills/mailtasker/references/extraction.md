@@ -35,12 +35,21 @@ Task **değildir**: bilgilendirme, bülten, reklam, kargo/sipariş durum bildiri
 başkasına atanmış işler, kullanıcının CC'de olduğu ve kendisinden bir şey istenmeyen mailler,
 otomatik "şifre sıfırlama"/"giriş kodu" mailleri.
 
-Bir maildeki task sayısı genelde 0–2; 4'ü geçmesin. Emin değilsen task açma — yanlış pozitif listeyi kirletir.
+Bir maildeki task sayısı genelde 0–2; 4'ü geçmesin.
+
+**Son kontrol (yazmadan önce, her görev için):** mailin tam metnindeki tarih ve saatleri görevle karşılaştır.
+Metinde bu işle ilgili bir tarih varken `due` boşsa, ya da detay başka bir şubenin tarihini içeriyorsa düzelt. Emin değilsen task açma — yanlış pozitif listeyi kirletir.
 
 ## Task alanları
 - `title`: emir kipinde, ≤ 80 karakter, kim/ne net. "Beta A.Ş. sözleşme taslağına yorum gönder" ✔ — "Sözleşme" ✘
 - `detail`: tutar, kişi, belge adı gibi işe yarar 1–2 cümle; gizli veri (IBAN tamamı, kart, şifre, kod) yazma.
-- `due`: mailde açık tarih varsa onu kullan. Göreli ifadeleri ("cuma", "haftaya", "EOD", "ay sonu")
+- `due`: **Mailde tarih geçen bir olay için görev asla tarihsiz bırakılmaz.**
+  - Tarihler sınıfa/şubeye/gruba göre veriliyorsa (ör. "4A 5 Eki, 4B 9 Eki") kişinin `config.spaces[].people[].section`
+    bilgisine göre doğru tarihi seç ve detaya yalnızca o tarihi yaz.
+  - Şube bilinmiyorsa `due` = listedeki en erken tarih; detaya "(şube bilinmiyor; Ayarlar › Alanlar'dan ekle)" yaz
+    ve raporda kullanıcıya şubeyi sor.
+  - Hazırlık görevlerinde (kıyafet, malzeme, form, imza) `due` = olay günü; olay 2 gün içindeyse öncelik `high`.
+  - Mailde açık tarih varsa onu kullan. Göreli ifadeleri ("cuma", "haftaya", "EOD", "ay sonu")
   **mailin tarihine göre** çöz. Tarih yoksa `null`.
 - `priority`:
   - `high`: 3 gün içinde son tarih, ödeme/ceza riski, yöneticiden/müşteriden doğrudan istek, "acil"

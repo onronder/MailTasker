@@ -629,6 +629,12 @@ details.seg-row.merged { opacity: .7; }
     }
     return true;
   }
+  // Snoozing past the due date would hide a deadline, so only offer snoozes that land before it.
+  function snoozeButtons(id, x) {
+    const opts = [["tomorrow", 1, t().snoozeTomorrow], ["week", 7, t().snoozeWeek]];
+    return opts.filter(([, n]) => !x.due || addDays(todayStr(), n) < x.due).map(([op, , label]) =>
+      `<button type="button" class="btn" data-act="task" data-op="${op}" data-id="${esc(id)}" aria-label="${esc(t().snoozeTitle + ": " + label)}">⏱ ${esc(label)}</button>`).join("");
+  }
   function taskRow(id, x) {
     const e = S.emails.get(x.emailId) || {};
     const st = effStatus(x), closed = st === "done" || st === "dismissed";
@@ -637,9 +643,8 @@ details.seg-row.merged { opacity: .7; }
     const from = e.from ? (e.from.name || e.from.email || "") : "";
     const actions = closed
       ? `<button type="button" class="btn" data-act="task" data-op="open" data-id="${esc(id)}">${esc(t().reopen)}</button>`
-      : `<button type="button" class="btn" data-act="task" data-op="tomorrow" data-id="${esc(id)}" aria-label="${esc(t().snoozeTitle + ": " + t().snoozeTomorrow)}">⏱ ${esc(t().snoozeTomorrow)}</button>
-         <button type="button" class="btn" data-act="task" data-op="week" data-id="${esc(id)}" aria-label="${esc(t().snoozeTitle + ": " + t().snoozeWeek)}">⏱ ${esc(t().snoozeWeek)}</button>
-         <button type="button" class="btn danger" data-act="task" data-op="dismiss" data-id="${esc(id)}">${esc(t().dismiss)}</button>`;
+      : snoozeButtons(id, x) + `<button type="button" class="btn danger" data-act="task" data-op="dismiss" data-id="${esc(id)}">${esc(t().dismiss)}</button>`;
+
     return `<li class="task p-${esc(x.priority || "low")} ${st}">
       <span class="stripe" aria-hidden="true"></span>
       <button type="button" class="check" data-act="task" data-op="${st === "done" ? "open" : "done"}" data-id="${esc(id)}" aria-label="${esc(st === "done" ? t().markOpen : t().markDone)}" aria-pressed="${st === "done"}"><svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg></button>
@@ -735,7 +740,7 @@ details.seg-row.merged { opacity: .7; }
     return {
       accounts: (c.accounts || []).map((a) => ({ key: a.key || "", provider: a.provider || "gmail", address: a.address || "", folders: (a.folders || []).join("\n") })),
       lookbackDays: c.lookbackDays ?? 30, maxPerRun: c.maxPerRun ?? 150, lang: c.lang || "auto",
-      spaces: spaces().map((x) => ({ id: x.id, name: x.name || "", color: x.color || "c1", folders: (x.folders || []).join(", "), people: (x.people || []).map((p) => (typeof p === "string" ? p : p.name)).join(", "), accounts: x.accounts || [] })),
+      spaces: spaces().map((x) => ({ id: x.id, name: x.name || "", color: x.color || "c1", folders: (x.folders || []).join(", "), people: (x.people || []).map((p) => (typeof p === "string" ? p : p.section ? `${p.name} (${p.section})` : p.name)).join(", "), accounts: x.accounts || [] })),
     };
   }
   function renderSettings() {
@@ -753,7 +758,7 @@ details.seg-row.merged { opacity: .7; }
       <div class="field"><label for="sn-${i}">${esc(t().spaceName)}</label><input class="input" id="sn-${i}" data-space-i="${i}" data-k="name" value="${esc(x.name)}" maxlength="30"></div>
       <div class="field"><label for="sf-${i}">${esc(t().spaceFolders)}</label><input class="input" id="sf-${i}" data-space-i="${i}" data-k="folders" value="${esc(x.folders)}" placeholder="Aci"></div>
       <div class="field"><span class="eyebrow">${esc(t().spaceColor)}</span><div class="colors">${COLORS.map((c) => `<button type="button" style="--sc:var(--${c})" aria-label="${c}" aria-pressed="${x.color === c}" data-act="spaceColor" data-i="${i}" data-color="${c}"></button>`).join("")}</div></div>
-      <div class="field wide"><label for="sp-${i}">${esc(t().spacePeople)}</label><input class="input" id="sp-${i}" data-space-i="${i}" data-k="people" value="${esc(x.people)}" placeholder="Kuzey, Poyraz"><span class="hint">${esc(t().peopleHint)}</span></div>
+      <div class="field wide"><label for="sp-${i}">${esc(t().spacePeople)}</label><input class="input" id="sp-${i}" data-space-i="${i}" data-k="people" value="${esc(x.people)}" placeholder="Kuzey (7D), Poyraz (4A)"><span class="hint">${esc(t().peopleHint)}</span></div>
       <div class="row-end wide"><button type="button" class="btn danger" data-act="rmSpace" data-i="${i}">${esc(t().removeSpace)}</button></div>
     </div>`).join("");
     return `<form class="panel" data-form="settings" style="max-width:860px">
@@ -893,7 +898,14 @@ details.seg-row.merged { opacity: .7; }
         while (usedIds.has(id)) id += "-2";
         usedIds.add(id);
         const out = { id, name: x.name.trim(), color: COLORS.includes(x.color) ? x.color : "c1", folders: splitList(x.folders) };
-        const people = splitList(x.people); if (people.length) out.people = people;
+        // "Kuzey (7D)" -> {name, grade, section}; plain names stay strings.
+        const people = splitList(x.people).map((p) => {
+          const m = p.match(/^(.+?)\s*\(([^)]+)\)$/);
+          if (!m) return p;
+          const section = m[2].trim(), grade = parseInt(section, 10);
+          return Number.isFinite(grade) ? { name: m[1].trim(), grade, section } : { name: m[1].trim(), section };
+        });
+        if (people.length) out.people = people;
         if (x.accounts && x.accounts.length) out.accounts = x.accounts;
         return out;
       });

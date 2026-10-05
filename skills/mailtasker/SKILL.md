@@ -93,6 +93,7 @@ Her mail için:
 - Tek kişi → `seg-<alan>-<kişi>` (ör. `seg-aci-kuzey`); birden çok kişi → `seg-<alan>-ortak`
   ("Ortak / Shared"); hiçbiri → `seg-<alan>-genel` ("Genel / General").
 - `emails.people` ve `tasks.people` alanlarına geçen kişileri yaz (`["kuzey"]`).
+- Kişinin `section`/`grade` bilgisi varsa sınıfa göre değişen tarihlerde onu kullan (`extraction.md` → `due`).
 - İsim geçmiyorsa sınıf, okul binası gibi kesin bir ipucu varsa ve daha önce o kişiye atanmış maillerle birebir
   örtüşüyorsa (ör. "7. Sınıf" hep Kuzey) o kişiye ata; emin değilsen `genel`.
 

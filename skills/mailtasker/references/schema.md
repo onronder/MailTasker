@@ -33,6 +33,8 @@ Dashboard Ayarlar sekmesi ve skill tarafından yazılır.
     { "id": "aci", "name": "Açı", "color": "c2", "folders": ["Aci"], "people": ["Kuzey", "Poyraz"] }
   ]
   ```
+  `people` öğeleri düz isim ya da `{ "name": "Poyraz", "grade": 4, "section": "4A" }` nesnesi olabilir; sınıfa/şubeye göre
+  değişen tarihlerde `section` kullanılır. Dashboard'da "Poyraz (4A)" biçiminde düzenlenir.
   `folders` boş olan alan genel alandır: başka alana ait olmayan her mail ona gider. `accounts` (hesap anahtarları)
   verilirse eşleşme o hesaplarla sınırlanır. `people` doluysa o alandaki segmentler kişiye göredir (`SKILL.md` 2b).
   Ayarlar'dan kaydederken `config/main` tümüyle yazıldığı için skill bu alanı korumalıdır.
